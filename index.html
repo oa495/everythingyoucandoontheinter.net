@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Everything We Can Do on the Web</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 50vh;
+  gap: 1px;
+  background: black;
+}
+
+.box {
+  background: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.box-label {
+  border-bottom: 1px solid black;
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+.box-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.friction {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 0.7rem;
+}
+
+/* ── DRAG ── */
+#drag-item {
+  border: 1px solid black;
+  padding: 20px 28px;
+  cursor: grab;
+  user-select: none;
+  text-align: center;
+}
+#drag-item.dragging { opacity: 0.4; cursor: grabbing; }
+
+/* ── DROP ── */
+#drop-zone {
+  width: 180px;
+  height: 110px;
+  border: 2px dashed black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ── HOVER ── */
+#hover-card {
+  border: 1px solid black;
+  padding: 20px 30px;
+  cursor: default;
+  text-align: center;
+}
+#hover-card:hover { background: black; color: white; }
+
+/* ── SCROLL WHEEL ── */
+#scroll-inner {
+  width: 100%;
+  max-height: 170px;
+  overflow-y: scroll;
+  border: 1px solid black;
+  padding: 10px;
+  line-height: 1.6;
+}
+#scroll-inner p + p { margin-top: 8px; }
+
+/* ── HOLD PROGRESS ── */
+#hold-track {
+  width: 200px;
+  height: 14px;
+  border: 1px solid black;
+}
+#hold-bar {
+  height: 100%;
+  width: 0%;
+  background: black;
+}
+
+/* ── LINK LIST ── */
+.link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+/* ── CHECKBOX / RADIO ── */
+.check-group, .radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.check-group label, .radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+/* ── SLIDER ── */
+#range-slider { width: 200px; }
+#range-value { font-size: 2rem; }
+
+/* ── BLINK ── */
+@keyframes blink-anim {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+#blink-text {
+  font-size: 1.5rem;
+  animation: blink-anim 1s step-start infinite;
+}
+
+/* ── MARQUEE ── */
+.marquee-wrap { width: 100%; }
+
+/* ── TIMERS ── */
+#countdown-display, #countup-display {
+  font-size: 3rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+.timer-controls { display: flex; gap: 8px; }
+#countdown-display.done { color: red; }
+
+/* ── TRAVERSABLE SPACE ── */
+#world-box { position: relative; }
+#world-body {
+  overflow: scroll;
+  padding: 0;
+  align-items: flex-start;
+  justify-content: flex-start;
+  cursor: crosshair;
+}
+#world-canvas {
+  width: 5000px;
+  height: 3000px;
+  flex-shrink: 0;
+  position: relative;
+  background-image: radial-gradient(circle, #ccc 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+#world-coords {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 0.7rem;
+  pointer-events: none;
+  background: rgba(255,255,255,0.85);
+  padding: 1px 5px;
+}
+
+/* ── CUSTOM CURSOR ── */
+#cursor-zone {
+  width: 80%;
+  height: 60%;
+  border: 1px solid black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='black' stroke-width='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='30' stroke='black' stroke-width='2'/%3E%3Cline x1='2' y1='16' x2='30' y2='16' stroke='black' stroke-width='2'/%3E%3C/svg%3E") 16 16, crosshair;
+}
+</style>
+</head>
+<body>
+<div class="grid">
+
+  <!-- 1. CLICK -->
+  <div class="box">
+    <div class="box-label">Click</div>
+    <div class="box-body">
+      <button id="click-btn">Click me</button>
+      <p id="click-count">0 clicks</p>
+      <span class="friction">friction: low</span>
+    </div>
+  </div>
+
+  <!-- 2. DOUBLE-CLICK -->
+  <div class="box">
+    <div class="box-label">Double-click</div>
+    <div class="box-body">
+      <div id="dbl-target">Double-click<br>to toggle</div>
+      <p id="dbl-hint">Try it!</p>
+      <span class="friction">friction: low</span>
+    </div>
+  </div>
+
+  <!-- 3. CLICK AND HOLD -->
+  <div class="box">
+    <div class="box-label">Click and Hold</div>
+    <div class="box-body">
+      <button id="hold-btn">Hold me down</button>
+      <div id="hold-track"><div id="hold-bar"></div></div>
+      <p id="hold-hint">Hold to fill the bar</p>
+      <span class="friction">friction: medium</span>
+    </div>
+  </div>
+
+  <!-- 4. DRAG -->
+  <div class="box">
+    <div class="box-label">Drag</div>
+    <div class="box-body">
+      <div id="drag-item" draggable="true">DRAG<br>ME</div>
+      <p>Drag me to the Drop box →</p>
+      <span class="friction">friction: high</span>
+    </div>
+  </div>
+
+  <!-- 5. DROP -->
+  <div class="box">
+    <div class="box-label">Drop</div>
+    <div class="box-body">
+      <div id="drop-zone">Drop something<br>here</div>
+      <span class="friction">friction: high</span>
+    </div>
+  </div>
+
+  <!-- 6. HOVER -->
+  <div class="box">
+    <div class="box-label">Hover</div>
+    <div class="box-body">
+      <div id="hover-card">Hover over me</div>
+      <p>Move your cursor over the card</p>
+      <span class="friction">friction: none</span>
+    </div>
+  </div>
+
+  <!-- 7. SCROLL WHEEL -->
+  <div class="box">
+    <div class="box-label">Scroll Wheel</div>
+    <div class="box-body">
+      <div id="scroll-inner">
+        <p>Use your scroll wheel or trackpad to scroll through this text.</p>
+        <p>The web was one of the first interfaces where scrolling became a primary mode of navigation — the infinite canvas, revealed by the wheel.</p>
+        <p>Before the scroll wheel was common, users clicked scrollbar arrows one notch at a time.</p>
+        <p>Today, trackpad gestures, touchscreen swipes, and the scroll wheel all map to the same underlying browser scroll event.</p>
+        <p>The scroll wheel also controls zoom in many applications (Cmd/Ctrl + scroll).</p>
+        <p>You've reached the bottom!</p>
+      </div>
+      <span class="friction">friction: low</span>
+    </div>
+  </div>
+
+  <!-- 8. CLICK + DRAG TO SELECT -->
+  <div class="box">
+    <div class="box-label">Click + Drag to Select</div>
+    <div class="box-body">
+      <p id="selectable-text">Click and drag across this text to highlight and select it. You can select a single word, an entire sentence, or any arbitrary run of characters across this passage.</p>
+      <p id="selection-count">Nothing selected</p>
+      <span class="friction">friction: medium</span>
+    </div>
+  </div>
+
+  <!-- 9. LINK -->
+  <div class="box">
+    <div class="box-label">Link</div>
+    <div class="box-body">
+      <div class="link-list">
+        <div>
+          <a href="#">An unvisited link</a>
+          <span class="link-label">blue</span>
+        </div>
+        <div>
+          <a href="" onclick="return false;" class="visited-demo">A visited link</a>
+          <span class="link-label">purple</span>
+        </div>
+        <div>
+          <a href="#" target="_blank">Opens in new tab ↗</a>
+          <span class="link-label">target="_blank"</span>
+        </div>
+        <div>
+          <a href="./this-page-does-not-exist.html">A broken link</a>
+          <span class="link-label">404</span>
+        </div>
+      </div>
+      <span class="friction">friction: low</span>
+    </div>
+  </div>
+
+  <!-- 10. SELECT -->
+  <div class="box">
+    <div class="box-label">Select</div>
+    <div class="box-body">
+      <select id="dropdown">
+        <option value="">— Choose a color —</option>
+        <option value="Red">Red</option>
+        <option value="Orange">Orange</option>
+        <option value="Yellow">Yellow</option>
+        <option value="Green">Green</option>
+        <option value="Blue">Blue</option>
+        <option value="Purple">Purple</option>
+      </select>
+      <p id="dropdown-out">No selection yet</p>
+      <span class="friction">friction: low</span>
+    </div>
+  </div>
+
+  <!-- 11. TEXT INPUT -->
+  <div class="box">
+    <div class="box-label">Text Input</div>
+    <div class="box-body">
+      <input type="text" id="text-field" placeholder="Type something here…" maxlength="80">
+      <p id="char-count">0 / 80 characters</p>
+      <span class="friction">friction: high</span>
+    </div>
+  </div>
+
+  <!-- 12. CHECKBOX -->
+  <div class="box">
+    <div class="box-label">Checkbox</div>
+    <div class="box-body">
+      <div class="check-group">
+        <label><input type="checkbox"> Option A</label>
+        <label><input type="checkbox" checked> Option B (default on)</label>
+        <label><input type="checkbox"> Option C</label>
+        <label><input type="checkbox" disabled> Option D (disabled)</label>
+      </div>
+      <span class="friction">friction: low</span>
+    </div>
+  </div>
+
+  <!-- 13. RADIO BUTTON -->
+  <div class="box">
+    <div class="box-label">Radio Button</div>
+    <div class="box-body">
+      <div class="radio-group">
+        <label><input type="radio" name="pick" value="red"> Red</label>
+        <label><input type="radio" name="pick" value="green" checked> Green (default)</label>
+        <label><input type="radio" name="pick" value="blue"> Blue</label>
+        <label><input type="radio" name="pick" value="purple"> Purple</label>
+      </div>
+      <span class="friction">friction: low</span>
+    </div>
+  </div>
+
+  <!-- 14. SLIDER -->
+  <div class="box">
+    <div class="box-label">Slider</div>
+    <div class="box-body">
+      <div id="range-value">50</div>
+      <input type="range" id="range-slider" min="0" max="100" value="50">
+      <p id="range-label">Drag the thumb left or right</p>
+      <span class="friction">friction: low</span>
+    </div>
+  </div>
+
+  <!-- 15. BLINK -->
+  <div class="box">
+    <div class="box-label">Blink</div>
+    <div class="box-body">
+      <span id="blink-text">BLINK</span>
+      <p>The &lt;blink&gt; tag was removed from browsers,<br>reproduced here with CSS animation.</p>
+      <span class="friction">friction: none</span>
+    </div>
+  </div>
+
+  <!-- 16. MARQUEE -->
+  <div class="box">
+    <div class="box-label">Marquee</div>
+    <div class="box-body">
+      <div class="marquee-wrap">
+        <marquee behavior="scroll" direction="left" scrollamount="4">
+          ★ Welcome to the Web! &nbsp;&nbsp;&nbsp;&nbsp; The &lt;marquee&gt; element scrolls text horizontally. &nbsp;&nbsp;&nbsp;&nbsp; A relic of the 1990s web. &nbsp;&nbsp;&nbsp;&nbsp; Still renders in most browsers. &nbsp;&nbsp;&nbsp;&nbsp; ★
+        </marquee>
+      </div>
+      <p>The &lt;marquee&gt; element is deprecated<br>but still supported in most browsers.</p>
+      <span class="friction">friction: none</span>
+    </div>
+  </div>
+
+  <!-- 17. CUSTOM CURSOR -->
+  <div class="box">
+    <div class="box-label">Custom Cursor</div>
+    <div class="box-body">
+      <div id="cursor-zone">Move your cursor in here</div>
+      <span class="friction">friction: none</span>
+    </div>
+  </div>
+
+  <!-- 19. TRAVERSABLE SPACE -->
+  <div class="box" id="world-box">
+    <div class="box-label">Traversable Space</div>
+    <div class="box-body" id="world-body">
+      <div id="world-canvas"></div>
+    </div>
+    <div id="world-coords">0, 0</div>
+  </div>
+
+  <!-- 18. ALERT -->
+  <div class="box">
+    <div class="box-label">Alert</div>
+    <div class="box-body">
+      <button id="alert-btn">Show alert()</button>
+      <p>Triggers a blocking browser dialog</p>
+      <span class="friction">friction: high</span>
+    </div>
+  </div>
+
+  <!-- 20. COUNTDOWN TIMER -->
+  <div class="box">
+    <div class="box-label">Countdown Timer</div>
+    <div class="box-body">
+      <div id="countdown-display">1:00</div>
+      <div class="timer-controls">
+        <button id="countdown-start">Start</button>
+        <button id="countdown-reset">Reset</button>
+      </div>
+      <span class="friction">friction: low</span>
+    </div>
+  </div>
+
+  <!-- 21. COUNT UP TIMER -->
+  <div class="box">
+    <div class="box-label">Count Up Timer</div>
+    <div class="box-body">
+      <div id="countup-display">0:00</div>
+      <div class="timer-controls">
+        <button id="countup-start">Start</button>
+        <button id="countup-stop">Stop</button>
+      </div>
+      <span class="friction">friction: low</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── CLICK ──
+const clickBtn = document.getElementById('click-btn');
+const clickCount = document.getElementById('click-count');
+let clicks = 0;
+clickBtn.addEventListener('click', () => {
+  clicks++;
+  clickCount.textContent = clicks + (clicks === 1 ? ' click' : ' clicks');
+});
+
+// ── DOUBLE-CLICK ──
+const dblTarget = document.getElementById('dbl-target');
+const dblHint = document.getElementById('dbl-hint');
+let dblOn = false;
+dblTarget.addEventListener('dblclick', () => {
+  dblOn = !dblOn;
+  dblTarget.classList.toggle('toggled', dblOn);
+  dblTarget.textContent = dblOn ? 'Toggled on!\n(double-click again)' : 'Double-click\nto toggle';
+  dblHint.textContent = dblOn ? 'State: ON' : 'State: OFF';
+});
+
+// ── CLICK AND HOLD ──
+const holdBtn = document.getElementById('hold-btn');
+const holdBar = document.getElementById('hold-bar');
+const holdHint = document.getElementById('hold-hint');
+let holdRaf = null;
+let holdVal = 0;
+let holding = false;
+
+function holdTick() {
+  if (!holding) return;
+  holdVal = Math.min(100, holdVal + 1.8);
+  holdBar.style.width = holdVal + '%';
+  if (holdVal >= 100) {
+    holdHint.textContent = 'Full! Release to reset.';
+    return;
+  }
+  holdRaf = requestAnimationFrame(holdTick);
+}
+
+function startHold() {
+  holding = true;
+  holdHint.textContent = 'Holding…';
+  holdRaf = requestAnimationFrame(holdTick);
+}
+
+function endHold() {
+  holding = false;
+  cancelAnimationFrame(holdRaf);
+  holdVal = 0;
+  holdBar.style.width = '0%';
+  holdHint.textContent = 'Hold to fill the bar';
+}
+
+holdBtn.addEventListener('mousedown', startHold);
+holdBtn.addEventListener('mouseup', endHold);
+holdBtn.addEventListener('mouseleave', endHold);
+holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
+holdBtn.addEventListener('touchend', endHold);
+
+// ── DRAG ──
+const dragItem = document.getElementById('drag-item');
+dragItem.addEventListener('dragstart', (e) => {
+  e.dataTransfer.setData('text/plain', 'block');
+  e.dataTransfer.effectAllowed = 'move';
+  requestAnimationFrame(() => dragItem.classList.add('dragging'));
+});
+dragItem.addEventListener('dragend', () => {
+  dragItem.classList.remove('dragging');
+});
+
+// ── DROP ──
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  dropZone.classList.add('over');
+});
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('over');
+});
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('over');
+  dropZone.classList.add('success');
+  dropZone.textContent = '✓ Dropped!';
+  setTimeout(() => {
+    dropZone.classList.remove('success');
+    dropZone.textContent = 'Drop something\nhere';
+  }, 2000);
+});
+
+// ── CLICK + DRAG TO SELECT ──
+const selectableText = document.getElementById('selectable-text');
+const selectionCount = document.getElementById('selection-count');
+document.addEventListener('selectionchange', () => {
+  const sel = window.getSelection();
+  const text = sel ? sel.toString() : '';
+  if (text.length > 0) {
+    selectionCount.textContent = text.length + ' character' + (text.length === 1 ? '' : 's') + ' selected';
+  } else {
+    selectionCount.textContent = 'Nothing selected';
+  }
+});
+
+
+// ── SELECT (DROPDOWN) ──
+const dropdown = document.getElementById('dropdown');
+const dropdownOut = document.getElementById('dropdown-out');
+dropdown.addEventListener('change', () => {
+  dropdownOut.textContent = dropdown.value ? 'Selected: ' + dropdown.value : 'No selection yet';
+});
+
+// ── TEXT INPUT ──
+const textField = document.getElementById('text-field');
+const charCount = document.getElementById('char-count');
+textField.addEventListener('input', () => {
+  charCount.textContent = textField.value.length + ' / 80 characters';
+});
+
+// ── SLIDER ──
+const rangeSlider = document.getElementById('range-slider');
+const rangeValue = document.getElementById('range-value');
+rangeSlider.addEventListener('input', () => {
+  rangeValue.textContent = rangeSlider.value;
+});
+
+// ── WORLD TEXT DISCOVERIES ──
+(function() {
+  const canvas = document.getElementById('world-canvas');
+  const items = [
+    [2460, 1460, 'you started somewhere around here'],
+    [2490,   55, 'the top of the world'],
+    [2420, 2930, 'the bottom of the world'],
+    [  55, 1485, 'western edge'],
+    [4840, 1485, 'eastern edge'],
+    [  70,   70, 'northwest corner'],
+    [4760,   70, 'northeast corner'],
+    [  70, 2930, 'southwest corner'],
+    [4760, 2930, 'southeast corner'],
+    [1200,  580, 'hello from up here'],
+    [3750,  380, 'pretty far out'],
+    [ 820, 2180, 'deep southwest'],
+    [4080, 2380, 'deep southeast'],
+    [ 600, 1100, 'west side'],
+    [4380,  820, 'east side'],
+    [1520, 2720, 'heading south'],
+    [3580, 2640, 'almost the bottom-right'],
+    [1480,  340, 'northwest quadrant'],
+    [3820, 1080, 'middle east'],
+    [ 960, 1820, 'wandering west'],
+    [2920,  470, 'northern territory'],
+    [2020, 2380, 'southern hemisphere'],
+    [ 320,  480, 'here be nothing'],
+    [4580, 1780, 'still going east?'],
+    [1820, 1220, 'slightly off-center'],
+    [3120, 1880, 'a little east of center'],
+    [ 440, 2600, 'you really went there'],
+    [4680,  440, 'few come this far'],
+    [2500, 1700, 'keep exploring'],
+    [1100, 1400, 'somewhere in the middle-left'],
+    [3400,  900, 'upper right region'],
+    [2200, 2800, 'near the southern floor'],
+    [4200,  200, 'way up northeast'],
+    [ 200, 1000, 'upper west side'],
+    [3000, 2600, 'almost the bottom'],
+  ];
+  items.forEach(([x, y, text]) => {
+    const el = document.createElement('span');
+    el.textContent = text;
+    el.style.cssText = `position:absolute;left:${x}px;top:${y}px;font-size:0.75rem;color:#aaa;white-space:nowrap;`;
+    canvas.appendChild(el);
+  });
+})();
+
+// ── TRAVERSABLE SPACE ──
+const worldBody = document.getElementById('world-body');
+const worldCoords = document.getElementById('world-coords');
+worldBody.scrollLeft = (5000 - worldBody.clientWidth) / 2;
+worldBody.scrollTop = (3000 - worldBody.clientHeight) / 2;
+const worldOriginX = worldBody.scrollLeft;
+const worldOriginY = worldBody.scrollTop;
+worldBody.addEventListener('scroll', () => {
+  const x = Math.round(worldBody.scrollLeft - worldOriginX);
+  const y = Math.round(worldBody.scrollTop - worldOriginY);
+  worldCoords.textContent = x + ', ' + y;
+});
+
+// ── COUNTDOWN TIMER ──
+const countdownDisplay = document.getElementById('countdown-display');
+const countdownStart = document.getElementById('countdown-start');
+const countdownReset = document.getElementById('countdown-reset');
+const COUNTDOWN_FROM = 60;
+let countdownVal = COUNTDOWN_FROM;
+let countdownInterval = null;
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m + ':' + String(sec).padStart(2, '0');
+}
+
+function countdownTick() {
+  countdownVal--;
+  countdownDisplay.textContent = formatTime(countdownVal);
+  if (countdownVal <= 0) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+    countdownStart.textContent = 'Start';
+    countdownDisplay.classList.add('done');
+  }
+}
+
+countdownStart.addEventListener('click', () => {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+    countdownStart.textContent = 'Start';
+  } else if (countdownVal > 0) {
+    countdownInterval = setInterval(countdownTick, 1000);
+    countdownStart.textContent = 'Pause';
+  }
+});
+
+countdownReset.addEventListener('click', () => {
+  clearInterval(countdownInterval);
+  countdownInterval = null;
+  countdownVal = COUNTDOWN_FROM;
+  countdownDisplay.textContent = formatTime(countdownVal);
+  countdownDisplay.classList.remove('done');
+  countdownStart.textContent = 'Start';
+});
+
+// ── COUNT UP TIMER ──
+const countupDisplay = document.getElementById('countup-display');
+const countupStart = document.getElementById('countup-start');
+const countupStop = document.getElementById('countup-stop');
+let countupVal = 0;
+let countupInterval = null;
+
+countupStart.addEventListener('click', () => {
+  if (countupInterval) {
+    clearInterval(countupInterval);
+    countupInterval = null;
+    countupStart.textContent = 'Resume';
+  } else {
+    countupInterval = setInterval(() => {
+      countupVal++;
+      countupDisplay.textContent = formatTime(countupVal);
+    }, 1000);
+    countupStart.textContent = 'Pause';
+  }
+});
+
+countupStop.addEventListener('click', () => {
+  clearInterval(countupInterval);
+  countupInterval = null;
+  countupVal = 0;
+  countupDisplay.textContent = '0:00';
+  countupStart.textContent = 'Start';
+});
+
+// ── ALERT ──
+document.getElementById('alert-btn').addEventListener('click', () => {
+  alert('Hello from alert()!');
+});
+</script>
+</body>
+</html>

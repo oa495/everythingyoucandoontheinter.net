@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Layout Grid</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body { padding: 40px; }
+
+#controls { margin-bottom: 24px; }
+
+.layout { display: none; }
+.layout.active { display: grid; }
+
+.cell {
+  border: 1px solid black;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ── CALENDAR ── */
+#calendar {
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 20vh;
+}
+
+/* ── AXIS ── */
+#axis {
+  grid-template-columns: 1fr 2px 1fr;
+  grid-template-rows: 1fr 2px 1fr;
+  grid-template-areas:
+    "q2      y-top   q1"
+    "x-left  origin  x-right"
+    "q3      y-bot   q4";
+  height: 70vh;
+  max-width: 700px;
+}
+#axis .axis-line { background: black; }
+#axis .quadrant  { border: none; font-size: 0.85rem; }
+
+/* ── GARDEN ── */
+#garden {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: 50px 1fr 1fr;
+  grid-template-areas:
+    "a   a   a   a"
+    "b   c   d   e"
+    "f   f   g   g";
+  height: 60vh;
+  max-width: 700px;
+}
+
+/* ── FLOORPLAN ── */
+#floorplan {
+  grid-template-columns: 2fr 1.5fr 1fr;
+  grid-template-rows: 1.5fr 1.5fr 0.25fr 1fr 1fr;
+  grid-template-areas:
+    "a   a   b"
+    "a   a   c"
+    "d   d   d"
+    "e   f   f"
+    "e   f   f";
+  height: 70vh;
+  max-width: 600px;
+}
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <select onchange="showLayout(this.value)">
+    <option value="calendar">Calendar</option>
+    <option value="axis">Axis</option>
+    <option value="garden">Garden Layout</option>
+    <option value="floorplan">Apartment Floorplan</option>
+  </select>
+</div>
+
+<!-- CALENDAR -->
+<div id="calendar" class="layout active">
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true"></div>
+</div>
+
+<!-- AXIS -->
+<div id="axis" class="layout">
+  <div class="cell quadrant" style="grid-area: q2;">II</div>
+  <div class="axis-line"     style="grid-area: y-top;"></div>
+  <div class="cell quadrant" style="grid-area: q1;">I</div>
+  <div class="axis-line"     style="grid-area: x-left;"></div>
+  <div class="axis-line"     style="grid-area: origin;"></div>
+  <div class="axis-line"     style="grid-area: x-right;"></div>
+  <div class="cell quadrant" style="grid-area: q3;">III</div>
+  <div class="axis-line"     style="grid-area: y-bot;"></div>
+  <div class="cell quadrant" style="grid-area: q4;">IV</div>
+</div>
+
+<!-- GARDEN -->
+<div id="garden" class="layout">
+  <div class="cell" contenteditable="true" style="grid-area: a;">a</div>
+  <div class="cell" contenteditable="true" style="grid-area: b;">b</div>
+  <div class="cell" contenteditable="true" style="grid-area: c;">c</div>
+  <div class="cell" contenteditable="true" style="grid-area: d;">d</div>
+  <div class="cell" contenteditable="true" style="grid-area: e;">e</div>
+  <div class="cell" contenteditable="true" style="grid-area: f;">f</div>
+  <div class="cell" contenteditable="true" style="grid-area: g;">g</div>
+</div>
+
+<!-- FLOORPLAN -->
+<div id="floorplan" class="layout">
+  <div class="cell" contenteditable="true" style="grid-area: a;">a</div>
+  <div class="cell" contenteditable="true" style="grid-area: b;">b</div>
+  <div class="cell" contenteditable="true" style="grid-area: c;">c</div>
+  <div class="cell" contenteditable="true" style="grid-area: d;">d</div>
+  <div class="cell" contenteditable="true" style="grid-area: e;">e</div>
+  <div class="cell" contenteditable="true" style="grid-area: f;">f</div>
+</div>
+
+<script>
+function showLayout(id) {
+  document.querySelectorAll('.layout').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+</script>
+
+</body>
+</html>

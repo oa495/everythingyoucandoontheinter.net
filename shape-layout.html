@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shape Layout</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body { overflow: hidden; }
+
+#stage {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+#guide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.block {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  outline: none;
+  text-align: center;
+  max-width: 180px;
+  cursor: text;
+}
+
+#controls {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+</style>
+</head>
+<body>
+
+<p style="position: fixed; top: 20px; left: 20px;">Final Curve by Langston Hughes</p>
+
+<div id="stage">
+  <svg id="guide"></svg>
+  <div class="block" contenteditable="true">When you turn the corner</div>
+  <div class="block" contenteditable="true">And you run into yourself</div>
+  <div class="block" contenteditable="true">Then you know that you have turned</div>
+  <div class="block" contenteditable="true">All the corners that are left</div>
+</div>
+
+<div id="controls">
+  <select onchange="applyShape(this.value)">
+    <option value="circle">Circle</option>
+    <option value="rectangle">Rectangle</option>
+    <option value="diagonal">Diagonal</option>
+    <option value="wave">Wave</option>
+  </select>
+</div>
+
+<script>
+const blocks = [...document.querySelectorAll('.block')];
+const stage  = document.getElementById('stage');
+const guide  = document.getElementById('guide');
+const ns     = 'http://www.w3.org/2000/svg';
+const dash   = 'fill:none;stroke:#ccc;stroke-width:1;stroke-dasharray:5,5';
+
+function getPositions(shape) {
+  const w = stage.offsetWidth;
+  const h = stage.offsetHeight;
+
+  if (shape === 'circle') {
+    const cx = w / 2, cy = h / 2, r = Math.min(w, h) * 0.32;
+    return [0,1,2,3].map(i => {
+      const a = (i / 4) * Math.PI * 2 - Math.PI / 2;
+      return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    });
+  }
+  if (shape === 'rectangle') {
+    return [
+      [w / 2,   h * 0.1],
+      [w * 0.9, h / 2  ],
+      [w / 2,   h * 0.9],
+      [w * 0.1, h / 2  ]
+    ];
+  }
+  if (shape === 'diagonal') {
+    return [0,1,2,3].map(i => [
+      w * (0.12 + i * 0.25),
+      h * (0.12 + i * 0.25)
+    ]);
+  }
+  if (shape === 'wave') {
+    const A = h * 0.22;
+    return [0,1,2,3].map(i => [
+      w * (0.12 + i * 0.25),
+      h / 2 + A * Math.sin(i * Math.PI / 2)
+    ]);
+  }
+}
+
+function drawGuide(shape) {
+  guide.innerHTML = '';
+  const w = stage.offsetWidth;
+  const h = stage.offsetHeight;
+
+  if (shape === 'circle') {
+    const el = document.createElementNS(ns, 'circle');
+    el.setAttribute('cx', w / 2);
+    el.setAttribute('cy', h / 2);
+    el.setAttribute('r',  Math.min(w, h) * 0.32);
+    el.setAttribute('style', dash);
+    guide.appendChild(el);
+  }
+  if (shape === 'rectangle') {
+    const el = document.createElementNS(ns, 'rect');
+    el.setAttribute('x',      w * 0.1);
+    el.setAttribute('y',      h * 0.1);
+    el.setAttribute('width',  w * 0.8);
+    el.setAttribute('height', h * 0.8);
+    el.setAttribute('style', dash);
+    guide.appendChild(el);
+  }
+  if (shape === 'diagonal') {
+    const el = document.createElementNS(ns, 'line');
+    el.setAttribute('x1', w * 0.12); el.setAttribute('y1', h * 0.12);
+    el.setAttribute('x2', w * 0.87); el.setAttribute('y2', h * 0.87);
+    el.setAttribute('style', dash);
+    guide.appendChild(el);
+  }
+  if (shape === 'wave') {
+    const A = h * 0.22;
+    const pts = Array.from({length: 101}, (_, i) => {
+      const t = i / 100;
+      const x = w * (0.12 + t * 0.75);
+      const y = h / 2 + A * Math.sin(t * Math.PI * 1.5);
+      return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+    }).join(' ');
+    const el = document.createElementNS(ns, 'path');
+    el.setAttribute('d', pts);
+    el.setAttribute('style', dash);
+    guide.appendChild(el);
+  }
+}
+
+function applyShape(shape) {
+  const pos = getPositions(shape);
+  blocks.forEach((b, i) => {
+    b.style.left = pos[i][0] + 'px';
+    b.style.top  = pos[i][1] + 'px';
+  });
+  drawGuide(shape);
+}
+
+applyShape('circle');
+</script>
+
+</body>
+</html>

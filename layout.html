@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>i am running into a new year</title>
+<style>
+body {
+  margin: 60px;
+  font-family: "Times New Roman", serif;
+  font-size: 1em; /* how big or small the text is */
+  line-height: 1em; /* line-height is the distance from one line of text to the next */
+  color: black; /* change color here if you want a different color! */
+}
+.stanza {
+  margin-bottom: 1.6em;
+}
+.stanza p {
+  margin: 0;
+}
+
+/*
+  To style a word, wrap it in a span with a class:
+  <span class="squiggle">word</span>
+
+  Available classes:
+    squiggle      wavy underline
+    size-up       larger text
+    size-down     smaller text
+    above         lifted above the line
+    below         dropped below the line
+    tracking-up   wider letter spacing
+    tracking-down tighter letter spacing
+
+  Classes can be combined:
+  <span class="size-up tracking-up">word</span>
+*/
+
+.squiggle       { text-decoration: underline wavy; }
+.size-up        { font-size: 1.5em; }
+.size-down      { font-size: 0.65em; }
+.above          { position: relative; top: -0.5em; }
+.below          { position: relative; top: 0.5em; }
+.tracking-up    { letter-spacing: 0.2em; }
+.tracking-down  { letter-spacing: -0.05em; }
+</style>
+</head>
+<body>
+
+<div class="poem">
+  <div class="stanza">
+    <p>i am running into a new year</p>
+    <p>and the old years blow back</p>
+    <p>like a wind</p>
+    <p>that i catch in my hair</p>
+    <p>like strong fingers like</p>
+    <p>all my old promises and</p>
+    <p>it will be hard to let go</p>
+    <p>of what i said to myself</p>
+    <p>about myself</p>
+    <p>when i was sixteen and</p>
+    <p>twenty-six and thirty-six</p>
+    <p>even thirty-six but</p>
+    <p>i am running into a new year</p>
+    <p>and i beg what i love and</p>
+    <p>i leave to forgive me</p>
+  </div>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+  <div contenteditable="true" style="text-align: center; outline: none;">
+    <!-- PASTE HERE TO CENTER ON THE PAGE -->
+  </div>
+</div>
+
+<div style="position: fixed; bottom: 20px; left: 20px; display: flex; flex-direction: column; gap: 6px;">
+  <div>
+    font size
+    <button onclick="adjustPoem('fontSize', -1)">−</button>
+    <button onclick="adjustPoem('fontSize', 1)">+</button>
+  </div>
+  <div>
+    line height
+    <button onclick="adjustPoem('lineHeight', -0.1)">−</button>
+    <button onclick="adjustPoem('lineHeight', 0.1)">+</button>
+  </div>
+  <div>
+    <select onchange="document.querySelector('.poem').style.fontFamily = this.value">
+      <option value="">default</option>
+      <option value="Georgia, serif">Georgia</option>
+      <option value="'Times New Roman', serif">Times New Roman</option>
+      <option value="Arial, sans-serif">Arial</option>
+      <option value="'Courier New', monospace">Courier New</option>
+      <option value="Impact, sans-serif">Impact</option>
+      <option value="Palatino, serif">Palatino</option>
+    </select>
+  </div>
+</div>
+
+<details style="position: fixed; bottom: 20px; right: 20px;">
+  <summary>How to add formatting to a word</summary>
+  <p>Wrap the word in a <code>&lt;span&gt;</code> with a class:</p>
+  <pre><code>&lt;span class="squiggle"&gt;word&lt;/span&gt;</code></pre>
+  <p>Available classes:</p>
+  <ul>
+    <li><code>squiggle</code> — wavy underline</li>
+    <li><code>size-up</code> — larger text</li>
+    <li><code>size-down</code> — smaller text</li>
+    <li><code>above</code> — lifted above the line</li>
+    <li><code>below</code> — dropped below the line</li>
+    <li><code>tracking-up</code> — letters farther apart</li>
+    <li><code>tracking-down</code> — letters closer together</li>
+  </ul>
+  <p>Classes can be combined: <code>&lt;span class="size-up tracking-up"&gt;word&lt;/span&gt;</code></p>
+</details>
+
+<script>
+const poem = document.querySelector('.poem');
+let fontSize = 16;
+let lineHeight = 1.9;
+
+function adjustPoem(prop, delta) {
+  if (prop === 'fontSize') {
+    fontSize = Math.max(8, fontSize + delta);
+    poem.style.fontSize = fontSize + 'px';
+  } else {
+    lineHeight = Math.max(0.8, Math.round((lineHeight + delta) * 10) / 10);
+    poem.style.lineHeight = lineHeight;
+  }
+}
+</script>
+</body>
+</html>
