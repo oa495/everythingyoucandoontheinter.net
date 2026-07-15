@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Concepts</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body { padding: 40px; font-family: "Times New Roman", serif; }
+
+/* font-size: 4rem makes the h1 very large — 4x the base font size */
+h1 { font-size: 4rem; margin-bottom: 32px; font-weight: normal; }
+
+/* Each .concept is one section (one concept + its list of sites) */
+.concept { margin-bottom: 32px; }
+
+.concept h2 {
+  font-size: 1rem;
+  font-weight: bold;
+  border-bottom: 1px solid black; /* the underline beneath each concept name */
+  padding-bottom: 4px;
+  margin-bottom: 10px;
+}
+
+/* h3 is used for sub-categories within a concept */
+.concept h3 {
+  font-size: 0.9rem;
+  font-weight: normal;
+  font-style: italic;
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+
+/* list-style: none removes the bullet points */
+.concept ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.concept ul li {
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+/* .note is used for parenthetical descriptions after a link */
+.note {
+  font-size: 0.8rem;
+  color: #555;
+  margin-left: 6px;
+}
+</style>
+</head>
+<body>
+
+<h1>Website References</h1>
+
+<!-- Each .concept block contains:
+       <h2>  — the concept name
+       <ul>  — a list of links to sites that use that concept
+
+     To add a new site, copy one <li> line and change the href and link text.
+     target="_blank" makes the link open in a new tab. -->
+
+<div class="concept">
+  <h2>Remembering / Persistence</h2>
+  <ul>
+    <li><a href="https://kpojo.world/story" target="_blank">Story</a></li>
+    <li><a href="https://www.blairs.computer/" target="_blank">Blair's Computer</a></li>
+  </ul>
+</div>
+
+<div class="concept">
+  <h2>Infinity / Scale</h2>
+  <ul>
+    <li><a href="https://aliciaguo.com/to-be/" target="_blank">To Be</a></li>
+    <li><a href="https://crawlspace.cool/pleasure-of-the-text" target="_blank">Pleasure of the Text</a></li>
+  </ul>
+</div>
+
+<div class="concept">
+  <h2>Togetherness / Telepresence</h2>
+  <ul>
+    <li><a href="https://www.yourworldoftext.com/" target="_blank">Your World of Text</a></li>
+    <li><a href="https://give-and-take.download/" target="_blank">Give and Take</a></li>
+  </ul>
+</div>
+
+<div class="concept">
+  <h2>Timed Concealment / Sequencing</h2>
+  <ul>
+    <!-- The <span class="note"> adds a small gray note after the link -->
+    <li><a href="https://a-small-memorial.bytoddwords.com/" target="_blank">A Small Memorial</a> <span class="note">(forcing you into a physical gesture)</span></li>
+    <li><a href="https://tinysubversions.com/stuff/lastwords/" target="_blank">Last Words</a></li>
+    <li><a href="https://crawlspace.cool/at-the-end-of-the-earth-i-find" target="_blank">At the End of the Earth I Find</a></li>
+    <li><a href="https://crawlspace.cool/return-home" target="_blank">Return Home</a></li>
+    <li><a href="https://afterimages.nicciyin.com/" target="_blank">Afterimages</a></li>
+  </ul>
+</div>
+
+<div class="concept">
+  <h2>Evocative</h2>
+  <!-- h3 breaks this concept into two sub-categories -->
+  <h3>Tailored to evoke or represent a certain emotion</h3>
+  <ul>
+    <li><a href="https://ifeelsomuchsha.me/" target="_blank">I Feel So Much Shame</a></li>
+    <li><a href="https://crawlspace.cool/grief-found-me" target="_blank">Grief Found Me</a></li>
+    <li><a href="https://aliciaguo.com/goodbye-boston/" target="_blank">Goodbye Boston</a></li>
+    <li><a href="https://aliciaguo.com/love-me-or-not/" target="_blank">Love Me or Not</a></li>
+    <li><a href="https://adarkroom.doublespeakgames.com/" target="_blank">A Dark Room</a></li>
+    <li><a href="https://crawlspace.cool/i-am-under-the-impression" target="_blank">I Am Under the Impression</a></li>
+  </ul>
+  <h3>Tailored to evoke or represent a real life experience</h3>
+  <ul>
+    <li><a href="https://pablo.energy/sunday-sites/practice/" target="_blank">Practice</a></li>
+    <li><a href="https://papertoilet.com/" target="_blank">Paper Toilet</a></li>
+    <li><a href="https://crawlspace.cool/i-am-under-the-impression" target="_blank">I Am Under the Impression</a></li>
+    <li><a href="https://shelby.cool/a-room-with-a-window/" target="_blank">A Room with a Window</a></li>
+    <li><a href="https://sas.rochester.edu/aah/sites/onlythesky/" target="_blank">Only the Sky</a></li>
+    <li><a href="https://coyote.computer/milkfish/" target="_blank">Milkfish</a></li>
+    <li><a href="https://thehtml.review/05/from-mine-to-yours/" target="_blank">From Mine to Yours</a></li>
+  </ul>
+</div>
+
+<div class="concept">
+  <h2>Show / Hide</h2>
+  <h3>Something "beneath" or "on top" or branching</h3>
+  <ul>
+    <li><a href="https://consumed.today/" target="_blank">Consumed</a></li>
+    <li><a href="https://crawlspace.cool/gazing-in" target="_blank">Gazing In</a></li>
+    <li><a href="https://crawlspace.cool/i-am-under-the-impression" target="_blank">I Am Under the Impression</a></li>
+    <li><a href="https://crawlspace.cool/if-i-were-able" target="_blank">If I Were Able</a></li>
+    <li><a href="https://crawlspace.cool/ode-to-echo" target="_blank">Ode to Echo</a></li>
+    <li><a href="https://coyote.computer/milkfish/" target="_blank">Milkfish</a></li>
+    <li><a href="https://blairjohnsonpoetry.com/spoilia/epigraph.html" target="_blank">Spoilia / Epigraph</a></li>
+  </ul>
+</div>
+
+<div class="concept">
+  <h2>Shape</h2>
+  <ul>
+    <li><a href="https://crawlspace.cool/i-feel-like-if-i-condensed-my-eating-schedules-together-i-d-be-eating-all-day" target="_blank">I Feel Like If I Condensed My Eating Schedules Together I'd Be Eating All Day</a></li>
+    <li><a href="https://thehtml.review/05/meanders/" target="_blank">Meanders</a></li>
+  </ul>
+</div>
+
+</body>
+</html>

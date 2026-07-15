@@ -6,32 +6,44 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body { padding: 40px; }
+body { padding: 40px; font-family: "Times New Roman", serif; }
 
 #controls { margin-bottom: 24px; }
 
-.layout { display: none; }
+/* All layouts are hidden by default. Only the one with class="active" is shown.
+   The JavaScript below adds/removes the "active" class when you use the dropdown. */
+.layout        { display: none; }
 .layout.active { display: grid; }
 
+/* Every cell in every grid shares these base styles */
 .cell {
   border: 1px solid black;
   padding: 10px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  align-items: center;    /* center content vertically */
+  justify-content: center; /* center content horizontally */
+  text-align: left;
 }
 
-/* ── CALENDAR ── */
+
+/* ── CALENDAR ──────────────────────────────────────────
+   repeat(7, 1fr) creates 7 equal columns (one per day).
+   1fr means "1 fraction of the available space."
+   grid-auto-rows sets the height of each row automatically. */
 #calendar {
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: 20vh;
+  grid-auto-rows: 20vh; /* vh = viewport height — 20vh is 20% of the screen height */
 }
 
-/* ── AXIS ── */
+
+/* ── AXIS ──────────────────────────────────────────────
+   grid-template-areas lets you draw the layout as ASCII art.
+   Each quoted string is one row; each word is one cell's name.
+   A cell can span multiple columns/rows by repeating its name.
+   The thin lines are 2px-wide cells with a black background. */
 #axis {
-  grid-template-columns: 1fr 2px 1fr;
-  grid-template-rows: 1fr 2px 1fr;
+  grid-template-columns: 1fr 2px 1fr; /* two panels separated by a 2px line */
+  grid-template-rows: 1fr 2px 1fr;    /* same idea vertically */
   grid-template-areas:
     "q2      y-top   q1"
     "x-left  origin  x-right"
@@ -39,10 +51,14 @@ body { padding: 40px; }
   height: 70vh;
   max-width: 700px;
 }
-#axis .axis-line { background: black; }
+#axis .axis-line { background: black; } /* the cross lines */
 #axis .quadrant  { border: none; font-size: 0.85rem; }
 
-/* ── GARDEN ── */
+
+/* ── GARDEN ────────────────────────────────────────────
+   Named areas let irregular shapes span multiple cells.
+   Area "a" spans all 4 columns in the first row.
+   Areas "f" and "g" each span 2 columns in the last row. */
 #garden {
   grid-template-columns: 1fr 1fr 1fr 1fr;
   grid-template-rows: 50px 1fr 1fr;
@@ -54,14 +70,18 @@ body { padding: 40px; }
   max-width: 700px;
 }
 
-/* ── FLOORPLAN ── */
+
+/* ── FLOORPLAN ─────────────────────────────────────────
+   Columns use different fr values to make some rooms wider.
+   2fr is twice as wide as 1fr.
+   Area "a" spans two rows (notice it appears in rows 1 and 2). */
 #floorplan {
   grid-template-columns: 2fr 1.5fr 1fr;
   grid-template-rows: 1.5fr 1.5fr 0.25fr 1fr 1fr;
   grid-template-areas:
     "a   a   b"
     "a   a   c"
-    "d   d   d"
+    "d   d   d"  /* hallway — very short row (0.25fr) */
     "e   f   f"
     "e   f   f";
   height: 70vh;
@@ -71,6 +91,9 @@ body { padding: 40px; }
 </head>
 <body>
 
+<!-- The dropdown that switches between layouts.
+     onchange= runs showLayout() each time you pick a new option.
+     this.value is the currently selected option's value= attribute. -->
 <div id="controls">
   <select onchange="showLayout(this.value)">
     <option value="calendar">Calendar</option>
@@ -80,50 +103,111 @@ body { padding: 40px; }
   </select>
 </div>
 
-<!-- CALENDAR -->
+<!-- CALENDAR
+     contenteditable="true" means you can click on any cell and type in it.
+     Each <div class="cell"> is one grid cell — they fill the 7-column grid in order. -->
+<h4>Spring By Edna St. Vincent Millay</h4>
 <div id="calendar" class="layout active">
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true">
+    To what purpose, April, do you return again? <br>
+    Beauty is not enough.
+  </div>
+  <div class="cell" contenteditable="true">
+    You can no longer quiet me with the redness <br>
+    Of little leaves opening stickily.
+  </div>
+  <div class="cell" contenteditable="true">
+    I know what I know. <br>
+    The sun is hot on my neck as I observe
+  </div>
+  <div class="cell" contenteditable="true">
+    The spikes of the crocus. <br>
+    The smell of the earth is good.
+  </div>
+  <div class="cell" contenteditable="true">
+    It is apparent that there is no death. <br>
+    But what does that signify?
+  </div>
+  <div class="cell" contenteditable="true">
 
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
+    Not only under ground are the brains of men <br>
+    Eaten by maggots.
+  </div>
+  <div class="cell" contenteditable="true">
+      Life in itself <br>
+    Is nothing,
+  </div>
 
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
-  <div class="cell" contenteditable="true"></div>
+  <div class="cell" contenteditable="true">
+    An empty cup, a flight of uncarpeted stairs. <br>
+    It is not enough that yearly, down this hill,
+  </div>
+  <div class="cell" contenteditable="true">
+    April <br>
+    Comes like an idiot, babbling and strewing flowers.
+  </div>
+  <div class="cell" contenteditable="true">
+    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+  </div>
+  <div class="cell" contenteditable="true">
+    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+  </div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
 </div>
 
-<!-- AXIS -->
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+  <div class="cell" contenteditable="true">    <img width="60%" src="https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0" alt="April Flowers"/>
+</div>
+</div>
+
+<!-- AXIS
+     Each cell uses style="grid-area: ..." to place itself in the named area
+     defined in the CSS grid-template-areas above. -->
 <div id="axis" class="layout">
   <div class="cell quadrant" style="grid-area: q2;">II</div>
   <div class="axis-line"     style="grid-area: y-top;"></div>
@@ -136,7 +220,9 @@ body { padding: 40px; }
   <div class="cell quadrant" style="grid-area: q4;">IV</div>
 </div>
 
-<!-- GARDEN -->
+<!-- GARDEN
+     Try changing the letters (a, b, c…) in the grid-template-areas CSS above
+     to rearrange which cells share space. -->
 <div id="garden" class="layout">
   <div class="cell" contenteditable="true" style="grid-area: a;">a</div>
   <div class="cell" contenteditable="true" style="grid-area: b;">b</div>
@@ -158,8 +244,12 @@ body { padding: 40px; }
 </div>
 
 <script>
+// showLayout hides all layouts, then shows the one you picked.
+// id is the value= of the selected <option> — e.g. "calendar" or "axis".
 function showLayout(id) {
+  // Remove "active" from every layout (hides them all)
   document.querySelectorAll('.layout').forEach(el => el.classList.remove('active'));
+  // Add "active" to just the chosen layout (shows it)
   document.getElementById(id).classList.add('active');
 }
 </script>

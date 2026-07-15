@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Branching Layout</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Times New Roman", serif;
+    font-size: 1rem;
+    padding: 40px;
+    line-height: 1.8;
+  }
+
+  /* The tree container */
+  #tree { white-space: pre; }
+
+  /* A clickable branch label */
+  .branch {
+    cursor: pointer;
+  }
+
+  .branch:hover { text-decoration: underline; }
+
+  /* The children that appear below a branch when expanded */
+  .children { display: none; }
+  .children.open { display: block; }
+</style>
+</head>
+<body>
+
+<div id="tree"></div>
+
+<script>
+
+// ─────────────────────────────────────────────
+// THE STORY DATA
+//
+// The story is a tree of "nodes."
+// Each node has:
+//   label    — the text shown in the tree
+//   children — an array of nodes that branch off from this one
+//              (if empty, it's a leaf / ending)
+// ─────────────────────────────────────────────
+
+
+const story = {
+  label: "i am running into a new year",
+  children: [
+    {
+      label: "and the old years blow back",
+      children: [
+        {
+          label: "like a wind",
+          children: [
+            {
+              label: "that i catch in my hair",
+            }
+          ]
+        },
+        {
+          label: "like strong fingers like",
+          children: [
+            { label: "all my old promises", children: [] }
+          ]
+        },
+      ]
+    },
+    {
+      label: "it will be hard to let go",
+      children: [
+        { 
+          label: "of what i said to myself", 
+          children: [
+            { 
+              label: "about myself",
+              children: [
+                { 
+                  label: "when i was sixteen and",
+                  children: [
+                    { 
+                      label: "twenty-six and thirty-six",
+                      children: [
+                        { 
+                          label: "even thirty-six ", 
+                          children: [] 
+                        }
+                      ] 
+                    }
+                  ]
+                }
+              ] 
+            }
+        ] }
+      ]
+    },
+    {
+      label: "i am running into a new year",
+      children: [
+        {
+          label: "and i beg what i love and",
+          children: [
+            { label: "i leave to forgive me.", children: [] }
+          ]
+        },
+      ]
+    }
+  ]
+};
+
+
+// ─────────────────────────────────────────────
+// BUILDING THE TREE
+//
+// buildNode() turns a node object into HTML.
+// It creates:
+//   - the label (clickable if the node has children)
+//   - a hidden <div> for the children
+//
+// When a label is clicked, the children div is
+// shown and the tree lines appear below it.
+// ─────────────────────────────────────────────
+
+function buildNode(node, prefix, isLast) {
+
+  // Tree drawing characters:
+  //   ├── means "there are more items after this one"
+  //   └── means "this is the last item"
+  const connector = isLast ? "└── " : "├── ";
+  // The vertical line that runs down the left for child items
+  const childPrefix = prefix + (isLast ? "    " : "│   ");
+
+  const wrapper = document.createElement("div");
+
+  // ── The label line ──
+  const labelLine = document.createElement("span");
+
+  // The indentation + connector (plain text, not clickable)
+  labelLine.appendChild(document.createTextNode(prefix + connector));
+
+  const children = node.children || [];
+
+  if (children.length > 0) {
+    // Nodes with children are clickable
+    const btn = document.createElement("span");
+    btn.className = "branch";
+    btn.textContent = node.label;
+
+    // Build the children container (hidden at first)
+    const childrenDiv = document.createElement("div");
+    childrenDiv.className = "children";
+
+    // Populate the children container
+    children.forEach(function(child, i) {
+      const isChildLast = (i === children.length - 1);
+      childrenDiv.appendChild(buildNode(child, childPrefix, isChildLast));
+    });
+
+    // Clicking the label toggles the children open/closed
+    btn.addEventListener("click", function() {
+      childrenDiv.classList.toggle("open");
+      btn.classList.add("visited");
+    });
+
+    labelLine.appendChild(btn);
+    wrapper.appendChild(labelLine);
+    wrapper.appendChild(document.createTextNode("\n"));
+    wrapper.appendChild(childrenDiv);
+
+  } else {
+    // Leaf nodes (endings) are plain text — no click needed
+    labelLine.appendChild(document.createTextNode(node.label));
+    wrapper.appendChild(labelLine);
+    wrapper.appendChild(document.createTextNode("\n"));
+  }
+
+  return wrapper;
+}
+
+
+// ─────────────────────────────────────────────
+// RENDER THE ROOT NODE
+//
+// The root node is treated slightly differently —
+// it has no connector or indentation, and its
+// children are shown immediately.
+// ─────────────────────────────────────────────
+
+function render() {
+  const treeEl = document.getElementById("tree");
+
+  // Root label (plain, always visible)
+  treeEl.appendChild(document.createTextNode(story.label + "\n"));
+
+  // Root children (visible from the start)
+  const rootChildren = document.createElement("div");
+  rootChildren.className = "children open";
+
+  story.children.forEach(function(child, i) {
+    const isLast = (i === story.children.length - 1);
+    rootChildren.appendChild(buildNode(child, "", isLast));
+  });
+
+  treeEl.appendChild(rootChildren);
+}
+
+render();
+
+</script>
+</body>
+</html>

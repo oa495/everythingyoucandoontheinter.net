@@ -38,14 +38,18 @@ body {
 .squiggle       { text-decoration: underline wavy; }
 .size-up        { font-size: 1.5em; }
 .size-down      { font-size: 0.65em; }
+/* position: relative + top lets an element move up or down without affecting the lines around it */
 .above          { position: relative; top: -0.5em; }
 .below          { position: relative; top: 0.5em; }
+/* letter-spacing controls the space between each character */
 .tracking-up    { letter-spacing: 0.2em; }
 .tracking-down  { letter-spacing: -0.05em; }
 </style>
 </head>
 <body>
 
+<!-- The poem. Each <p> is one line.
+     Add <span class="..."> around any word to style it (see the class list above). -->
 <div class="poem">
   <div class="stanza">
     <p>i am running into a new year</p>
@@ -66,15 +70,22 @@ body {
   </div>
 </div>
 
+<!-- A centered editable area that fills the screen height.
+     contenteditable="true" means you can click and type directly on the page.
+     outline: none removes the box that normally appears when you click into an editable area. -->
 <div style="display: flex; align-items: center; justify-content: center; height: 100vh;">
   <div contenteditable="true" style="text-align: center; outline: none;">
     <!-- PASTE HERE TO CENTER ON THE PAGE -->
   </div>
 </div>
 
+<!-- position: fixed keeps this control panel stuck to the bottom-left corner
+     even when you scroll the page. -->
 <div style="position: fixed; bottom: 20px; left: 20px; display: flex; flex-direction: column; gap: 6px;">
   <div>
     font size
+    <!-- onclick= runs a JavaScript function when the button is clicked.
+         adjustPoem('fontSize', -1) shrinks the text; +1 grows it. -->
     <button onclick="adjustPoem('fontSize', -1)">−</button>
     <button onclick="adjustPoem('fontSize', 1)">+</button>
   </div>
@@ -84,6 +95,8 @@ body {
     <button onclick="adjustPoem('lineHeight', 0.1)">+</button>
   </div>
   <div>
+    <!-- onchange= runs when you pick a new option from the dropdown.
+         This changes the font of just the .poem element. -->
     <select onchange="document.querySelector('.poem').style.fontFamily = this.value">
       <option value="">default</option>
       <option value="Georgia, serif">Georgia</option>
@@ -96,6 +109,8 @@ body {
   </div>
 </div>
 
+<!-- <details> is a built-in HTML element that collapses/expands on click.
+     <summary> is the always-visible clickable label. -->
 <details style="position: fixed; bottom: 20px; right: 20px;">
   <summary>How to add formatting to a word</summary>
   <p>Wrap the word in a <code>&lt;span&gt;</code> with a class:</p>
@@ -114,15 +129,22 @@ body {
 </details>
 
 <script>
+// These variables store the current font size and line height.
+// JavaScript needs to track them so the +/- buttons know what to add to.
 const poem = document.querySelector('.poem');
-let fontSize = 16;
+let fontSize   = 16;
 let lineHeight = 1.9;
 
+// adjustPoem is called by the +/- buttons.
+// prop  = which property to change ('fontSize' or 'lineHeight')
+// delta = how much to change it by (positive = bigger, negative = smaller)
 function adjustPoem(prop, delta) {
   if (prop === 'fontSize') {
+    // Math.max(8, ...) prevents the font from going smaller than 8px
     fontSize = Math.max(8, fontSize + delta);
     poem.style.fontSize = fontSize + 'px';
   } else {
+    // Math.round(... * 10) / 10 keeps the number to one decimal place
     lineHeight = Math.max(0.8, Math.round((lineHeight + delta) * 10) / 10);
     poem.style.lineHeight = lineHeight;
   }

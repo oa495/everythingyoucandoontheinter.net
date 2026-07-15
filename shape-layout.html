@@ -6,36 +6,50 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* overflow: hidden prevents scrollbars from appearing when elements
+   are positioned near the edges of the screen */
 body { overflow: hidden; }
 
+/* The stage fills the entire browser window.
+   100vw = 100% of the viewport width, 100vh = 100% of the viewport height.
+   position: relative is needed so absolutely-positioned children
+   are placed relative to this div, not the whole page. */
 #stage {
   width: 100vw;
   height: 100vh;
   position: relative;
 }
 
+/* The SVG guide draws the dashed shape outline behind the text blocks.
+   pointer-events: none means you can't click on it — clicks pass through
+   to the text blocks underneath. */
 #guide {
   position: absolute;
-  inset: 0;
+  inset: 0; /* shorthand for top:0; right:0; bottom:0; left:0 — fills the stage */
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
 
+/* Each text block is positioned absolutely, meaning it's placed at exact
+   pixel coordinates set by JavaScript (left: and top:).
+   transform: translate(-50%, -50%) shifts the block so its CENTER sits
+   at those coordinates, rather than its top-left corner. */
 .block {
   position: absolute;
   transform: translate(-50%, -50%);
-  outline: none;
+  outline: none;     /* removes the focus ring when you click to edit */
   text-align: center;
   max-width: 180px;
   cursor: text;
 }
 
+/* The shape selector dropdown, pinned to the bottom center of the screen */
 #controls {
   position: fixed;
   bottom: 20px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%); /* centers the controls horizontally */
 }
 </style>
 </head>
@@ -43,6 +57,8 @@ body { overflow: hidden; }
 
 <p style="position: fixed; top: 20px; left: 20px;">Final Curve by Langston Hughes</p>
 
+<!-- The stage holds the SVG guide and the four text blocks.
+     contenteditable="true" lets you click and type on each block. -->
 <div id="stage">
   <svg id="guide"></svg>
   <div class="block" contenteditable="true">When you turn the corner</div>
@@ -51,6 +67,7 @@ body { overflow: hidden; }
   <div class="block" contenteditable="true">All the corners that are left</div>
 </div>
 
+<!-- Changing this dropdown calls applyShape(), which repositions the blocks -->
 <div id="controls">
   <select onchange="applyShape(this.value)">
     <option value="circle">Circle</option>
@@ -61,48 +78,75 @@ body { overflow: hidden; }
 </div>
 
 <script>
-const blocks = [...document.querySelectorAll('.block')];
+// Grab references to the elements we'll need throughout
+const blocks = [...document.querySelectorAll('.block')]; // the four text blocks
 const stage  = document.getElementById('stage');
 const guide  = document.getElementById('guide');
-const ns     = 'http://www.w3.org/2000/svg';
-const dash   = 'fill:none;stroke:#ccc;stroke-width:1;stroke-dasharray:5,5';
+
+// SVG elements need a special namespace when created with JavaScript
+const ns   = 'http://www.w3.org/2000/svg';
+// Shared style for all guide lines: gray, dashed, no fill
+const dash = 'fill:none;stroke:#ccc;stroke-width:1;stroke-dasharray:5,5';
+
+
+// ── getPositions ────────────────────────────────────────────────────────────
+// Returns an array of [x, y] coordinates — one for each of the 4 blocks.
+// w and h are the current width and height of the stage.
+// The coordinates are calculated as fractions of w/h so the layout
+// scales to any screen size.
 
 function getPositions(shape) {
   const w = stage.offsetWidth;
   const h = stage.offsetHeight;
 
   if (shape === 'circle') {
-    const cx = w / 2, cy = h / 2, r = Math.min(w, h) * 0.32;
-    return [0,1,2,3].map(i => {
-      const a = (i / 4) * Math.PI * 2 - Math.PI / 2;
-      return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    const cx = w / 2;                      // center x
+    const cy = h / 2;                      // center y
+    const r  = Math.min(w, h) * 0.32;     // radius = 32% of the smaller dimension
+    // Place each block evenly around the circle using trigonometry.
+    // The angle starts at -π/2 so the first block appears at the top.
+    return [0, 1, 2, 3].map(i => {
+      const angle = (i / 4) * Math.PI * 2 - Math.PI / 2;
+      return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
     });
   }
+
   if (shape === 'rectangle') {
+    // Four corners of a rectangle that has a 10% margin from the edges
     return [
-      [w / 2,   h * 0.1],
-      [w * 0.9, h / 2  ],
-      [w / 2,   h * 0.9],
-      [w * 0.1, h / 2  ]
+      [w / 2,   h * 0.1],  // top center
+      [w * 0.9, h / 2  ],  // right center
+      [w / 2,   h * 0.9],  // bottom center
+      [w * 0.1, h / 2  ]   // left center
     ];
   }
+
   if (shape === 'diagonal') {
-    return [0,1,2,3].map(i => [
+    // Four evenly-spaced points along a top-left to bottom-right diagonal
+    return [0, 1, 2, 3].map(i => [
       w * (0.12 + i * 0.25),
       h * (0.12 + i * 0.25)
     ]);
   }
+
   if (shape === 'wave') {
-    const A = h * 0.22;
-    return [0,1,2,3].map(i => [
+    const A = h * 0.22; // amplitude — how tall the wave is
+    // Four points spread across the width, with y following a sine curve
+    return [0, 1, 2, 3].map(i => [
       w * (0.12 + i * 0.25),
       h / 2 + A * Math.sin(i * Math.PI / 2)
     ]);
   }
 }
 
+
+// ── drawGuide ────────────────────────────────────────────────────────────────
+// Draws a dashed SVG shape behind the text blocks so you can see the path.
+// SVG (Scalable Vector Graphics) lets you draw shapes with code.
+// Each shape type creates a different SVG element.
+
 function drawGuide(shape) {
-  guide.innerHTML = '';
+  guide.innerHTML = ''; // clear the previous guide shape
   const w = stage.offsetWidth;
   const h = stage.offsetHeight;
 
@@ -114,6 +158,7 @@ function drawGuide(shape) {
     el.setAttribute('style', dash);
     guide.appendChild(el);
   }
+
   if (shape === 'rectangle') {
     const el = document.createElementNS(ns, 'rect');
     el.setAttribute('x',      w * 0.1);
@@ -123,6 +168,7 @@ function drawGuide(shape) {
     el.setAttribute('style', dash);
     guide.appendChild(el);
   }
+
   if (shape === 'diagonal') {
     const el = document.createElementNS(ns, 'line');
     el.setAttribute('x1', w * 0.12); el.setAttribute('y1', h * 0.12);
@@ -130,10 +176,13 @@ function drawGuide(shape) {
     el.setAttribute('style', dash);
     guide.appendChild(el);
   }
+
   if (shape === 'wave') {
     const A = h * 0.22;
+    // Build a path by calculating 101 points along the wave curve
+    // and connecting them with SVG "M" (move to) and "L" (line to) commands
     const pts = Array.from({length: 101}, (_, i) => {
-      const t = i / 100;
+      const t = i / 100; // t goes from 0 to 1 across the width
       const x = w * (0.12 + t * 0.75);
       const y = h / 2 + A * Math.sin(t * Math.PI * 1.5);
       return `${i === 0 ? 'M' : 'L'}${x},${y}`;
@@ -145,15 +194,21 @@ function drawGuide(shape) {
   }
 }
 
+
+// ── applyShape ───────────────────────────────────────────────────────────────
+// Called when you pick a shape from the dropdown.
+// Gets the positions, moves each block, then draws the guide.
+
 function applyShape(shape) {
   const pos = getPositions(shape);
-  blocks.forEach((b, i) => {
-    b.style.left = pos[i][0] + 'px';
-    b.style.top  = pos[i][1] + 'px';
+  blocks.forEach((block, i) => {
+    block.style.left = pos[i][0] + 'px';
+    block.style.top  = pos[i][1] + 'px';
   });
   drawGuide(shape);
 }
 
+// Start with a circle when the page first loads
 applyShape('circle');
 </script>
 
