@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HTML Elements That Only Change Styling</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  padding: 40px;
+  max-width: 700px;
+  font-family: "Garamond", "Times New Roman", serif;
+  line-height: 1.5;
+}
+
+h1 { margin-bottom: 0.5rem; }
+
+p.intro { margin-bottom: 2rem; max-width: 55ch; }
+
+h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+ul { list-style: none; margin-bottom: 1rem; }
+
+li {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 1rem;
+}
+
+li code {
+  flex: 0 0 110px;
+  font-family: "Courier New", monospace;
+  background: #f0efe9;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* position: sticky keeps the picker visible while scrolling the tag list */
+.picker {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 16px 0;
+  border-bottom: 2px solid black;
+  margin-bottom: 1rem;
+}
+
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+pre {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #1e1e1e;
+  color: #eaeaea;
+  font-family: "Courier New", monospace;
+  font-size: 1.1rem;
+  border-radius: 4px;
+  display: inline-block;
+  /* user-select makes it obvious/easy to select-all for copying */
+  user-select: all;
+}
+</style>
+</head>
+<body>
+
+<h1>HTML Elements That Only Change Styling</h1>
+<p class="intro">
+  Every tag below is inline: it changes how its text looks — weight, style, size, decoration —
+  without creating a new box or affecting the layout around it, unlike the tags on the
+  <a href="layout-elements.html">layout elements</a> page. Click the button to get a random one.
+</p>
+
+<!-- The picker is its own section so the button + result stay easy to find
+     while scrolling through the reference list below. -->
+<div class="picker">
+  <button onclick="pickRandom()">Pick a Random Styling Element</button>
+  <pre id="result">click the button <- </pre>
+</div>
+
+<h2>Emphasis &amp; Importance</h2>
+<ul id="list-emphasis"></ul>
+
+<h2>Size &amp; Position</h2>
+<ul id="list-sizePosition"></ul>
+
+<h2>Edits &amp; Corrections</h2>
+<ul id="list-edits"></ul>
+
+<h2>Code &amp; Technical</h2>
+<ul id="list-code"></ul>
+
+<h2>Semantic Inline</h2>
+<ul id="list-semantic"></ul>
+
+<h2>Generic</h2>
+<ul id="list-generic"></ul>
+
+<script>
+// Each entry: [tag, note]. All of these are inline elements with a closing tag,
+// so unlike layout-elements.html there's no void-tag case to handle here.
+const categories = {
+  emphasis: [
+    ['em', 'italicizes text, semantically stressed'],
+    ['strong', 'bolds text, semantically important'],
+    ['b', 'bolds text, no semantic weight'],
+    ['i', 'italicizes text, no semantic weight'],
+    ['u', 'underlines text'],
+    ['mark', 'highlights text, usually with a yellow background'],
+  ],
+  sizePosition: [
+    ['small', 'renders text smaller, for fine print'],
+    ['sub', 'renders text lower and smaller, for subscripts'],
+    ['sup', 'renders text higher and smaller, for superscripts'],
+  ],
+  edits: [
+    ['ins', 'underlines text to show it was inserted'],
+    ['del', 'strikes through text to show it was removed'],
+    ['s', 'strikes through text that is no longer accurate'],
+  ],
+  code: [
+    ['code', 'renders text in a monospace font'],
+    ['kbd', 'renders text in a monospace font, for keyboard input'],
+    ['samp', 'renders text in a monospace font, for sample output'],
+    ['var', 'italicizes text, for variables'],
+  ],
+  semantic: [
+    ['abbr', 'adds a dotted underline, with a tooltip on the title attribute'],
+    ['cite', 'italicizes text, for the title of a work'],
+    ['q', 'wraps text in quotation marks'],
+    ['dfn', 'italicizes text, for the term being defined'],
+    ['time', 'no default style change, marks a date or time'],
+    ['data', 'no default style change, pairs text with a machine-readable value'],
+  ],
+  generic: [
+    ['span', 'a plain inline wrapper with no default style of its own'],
+  ],
+};
+
+// Flatten every [tag, note] pair into one array so the random picker
+// can draw from all categories at once.
+const allTags = Object.values(categories).flat();
+
+function snippetFor(tag) {
+  return `<${tag}></${tag}>`;
+}
+
+// Fill in each category's <ul> from the data above.
+for (const [key, entries] of Object.entries(categories)) {
+  const list = document.getElementById(`list-${key}`);
+  for (const [tag, note] of entries) {
+    const li = document.createElement('li');
+    const code = document.createElement('code');
+    code.textContent = snippetFor(tag);
+    const span = document.createElement('span');
+    span.textContent = note;
+    li.append(code, span);
+    list.appendChild(li);
+  }
+}
+
+function pickRandom() {
+  const [tag] = allTags[Math.floor(Math.random() * allTags.length)];
+  document.getElementById('result').textContent = snippetFor(tag);
+}
+</script>
+</body>
+</html>

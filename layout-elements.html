@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HTML Elements That Affect Layout</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  padding: 40px;
+  max-width: 700px;
+  font-family: "Garamond", "Times New Roman", serif;
+  line-height: 1.5;
+}
+
+h1 { margin-bottom: 0.5rem; }
+
+p.intro { margin-bottom: 2rem; max-width: 55ch; }
+
+h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+ul { list-style: none; margin-bottom: 1rem; }
+
+li {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 1rem;
+}
+
+li code {
+  flex: 0 0 110px;
+  font-family: "Courier New", monospace;
+  background: #f0efe9;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* position: sticky keeps the picker visible while scrolling the tag list */
+.picker {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 16px 0;
+  border-bottom: 2px solid black;
+  margin-bottom: 1rem;
+}
+
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+pre {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #1e1e1e;
+  color: #eaeaea;
+  font-family: "Courier New", monospace;
+  font-size: 1.1rem;
+  border-radius: 4px;
+  display: inline-block;
+  /* user-select makes it obvious/easy to select-all for copying */
+  user-select: all;
+}
+</style>
+</head>
+<body>
+
+<h1>HTML Elements That Affect Layout</h1>
+<p class="intro">
+  Every tag below creates its own visual box, or otherwise changes how content is arranged on the page —
+  as opposed to purely inline <a href="styling-elements.html">styling tags</a> like <code>&lt;span&gt;</code>
+  or <code>&lt;em&gt;</code>, which don't. Click the button to get a random one.
+</p>
+
+<!-- The picker is its own section so the button + result stay easy to find
+     while scrolling through the reference list below. -->
+<div class="picker">
+  <button onclick="pickRandom()">Pick a Random Layout Element</button>
+  <pre id="result">click the button <- </pre>
+</div>
+
+<h2>Structural / Sectioning</h2>
+<ul id="list-structural"></ul>
+
+<h2>Text Blocks</h2>
+<ul id="list-text"></ul>
+
+<h2>Lists</h2>
+<ul id="list-lists"></ul>
+
+<h2>Tables</h2>
+<ul id="list-tables"></ul>
+
+<h2>Forms</h2>
+<ul id="list-forms"></ul>
+
+<h2>Media &amp; Embedded</h2>
+<ul id="list-media"></ul>
+
+<h2>Interactive</h2>
+<ul id="list-interactive"></ul>
+
+<script>
+// Each entry: [tag, note]. "void" tags (no closing tag, like <br>) are
+// listed in the voidTags set below so we know how to format their snippet.
+const categories = {
+  structural: [
+    ['div', 'generic block-level container, the default building block for layout'],
+    ['header', 'introductory content, usually at the top of a page or section'],
+    ['footer', 'closing content, usually at the bottom of a page or section'],
+    ['nav', 'a block of navigation links'],
+    ['main', 'wraps the primary content of the page'],
+    ['section', 'groups thematically related content into its own block'],
+    ['article', 'a self-contained block of content'],
+    ['aside', 'tangential content, often placed beside the main flow'],
+    ['figure', 'groups self-contained media with its caption'],
+    ['figcaption', 'the caption belonging to a figure'],
+  ],
+  text: [
+    ['h1', 'largest block-level heading'],
+    ['h2', 'block-level heading'],
+    ['h3', 'block-level heading'],
+    ['h4', 'block-level heading'],
+    ['h5', 'block-level heading'],
+    ['h6', 'smallest block-level heading'],
+    ['p', 'a paragraph, block-level with margin above and below'],
+    ['blockquote', 'block-level, indented by default'],
+    ['pre', 'block-level, preserves whitespace and line breaks'],
+    ['address', 'block-level, italicized by default'],
+    ['hr', 'draws a horizontal dividing line'],
+    ['br', 'forces a line break inside inline content'],
+  ],
+  lists: [
+    ['ul', 'block-level bulleted list, indents its items'],
+    ['ol', 'block-level numbered list, indents its items'],
+    ['li', 'a list item, positioned by its parent list'],
+    ['dl', 'block-level description list'],
+    ['dt', 'a term inside a description list'],
+    ['dd', 'a description, indented under its term'],
+  ],
+  tables: [
+    ['table', 'lays out content in a grid of rows and columns'],
+    ['caption', 'labels a table, positioned above or below it'],
+    ['thead', 'groups the header row(s) of a table'],
+    ['tbody', 'groups the body rows of a table'],
+    ['tfoot', 'groups the footer row(s) of a table'],
+    ['tr', 'a table row'],
+    ['th', 'a header cell'],
+    ['td', 'a data cell'],
+  ],
+  forms: [
+    ['form', 'block-level container for form controls'],
+    ['fieldset', 'draws a border around a group of controls'],
+    ['legend', 'the caption for a fieldset'],
+    ['input', 'a form control box, sized depending on its type'],
+    ['textarea', 'a resizable multi-line text box'],
+    ['select', 'a dropdown control box'],
+    ['button', 'a clickable control box'],
+  ],
+  media: [
+    ['img', 'a replaced element with intrinsic width/height'],
+    ['video', 'a replaced element with intrinsic dimensions and controls'],
+    ['audio', 'a replaced element rendering playback controls'],
+    ['canvas', 'a drawable bitmap area'],
+    ['svg', 'a drawable vector graphics area'],
+    ['iframe', 'embeds another document in its own box'],
+    ['embed', 'embeds external content in its own box'],
+    ['object', 'embeds an external resource in its own box'],
+  ],
+  interactive: [
+    ['details', 'a block-level, collapsible container'],
+    ['summary', 'the always-visible clickable label for a details element'],
+    ['dialog', 'can render as a centered modal box'],
+  ],
+};
+
+const voidTags = new Set(['hr', 'br', 'img', 'input', 'embed']);
+
+// Flatten every [tag, note] pair into one array so the random picker
+// can draw from all categories at once.
+const allTags = Object.values(categories).flat();
+
+function snippetFor(tag) {
+  return voidTags.has(tag) ? `<${tag}>` : `<${tag}></${tag}>`;
+}
+
+// Fill in each category's <ul> from the data above.
+for (const [key, entries] of Object.entries(categories)) {
+  const list = document.getElementById(`list-${key}`);
+  for (const [tag, note] of entries) {
+    const li = document.createElement('li');
+    const code = document.createElement('code');
+    code.textContent = snippetFor(tag);
+    const span = document.createElement('span');
+    span.textContent = note;
+    li.append(code, span);
+    list.appendChild(li);
+  }
+}
+
+function pickRandom() {
+  const [tag] = allTags[Math.floor(Math.random() * allTags.length)];
+  document.getElementById('result').textContent = snippetFor(tag);
+}
+</script>
+</body>
+</html>
