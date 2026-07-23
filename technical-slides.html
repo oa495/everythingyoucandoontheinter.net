@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<title>Setup Projects + Intro to HTML, CSS &amp; JavaScript</title>
+    
+    <!-- Reveal.js CSS from CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/monokai.min.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link
+		href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Montserrat:ital,wght@0,300..800;1,300..800&display=swap"
+		rel="stylesheet" />
+	<style>
+		.reveal .slides {
+			text-align: left;
+		}
+
+		body {
+			line-height: 2rem !important;
+			font-size: 1.8rem;
+		}
+
+		li {
+			margin-bottom: 1rem;
+			margin-top: 1rem;
+			text-align: left;
+		}
+
+		h2 {
+			font-size: 3rem;
+		}
+
+		.reveal {
+			font-family: "Montserrat", sans-serif;
+		}
+
+		.reveal h1,
+		.reveal h2,
+		.reveal h3,
+		.reveal h4,
+		.reveal h5,
+		.reveal h6 {
+			font-family: "EB Garamond", serif;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section>
+				<h2>Setting Up Our Poetic Projects</h2>
+				<h3>Intro to HTML, CSS & JavaScript</h3>
+			</section>
+
+			<section>
+				<p>Reference: <a href="https://htmlforpeople.com/zero-to-internet-your-first-website/">Zero to
+						Internet: Your First Website</a></p>
+				<p>Websites are just files with text. You can create a website right now with nothing but the text
+					editor you already have.</p>
+                    <aside>> Ask about people’s experience with coding.
+> If you’re already familiar with all this, you can explore the resources / websites I provided, or get started on our own poetic website!
+</aside>
+			</section>
+
+			<section>
+				<ol>
+					<li>Create a folder on your computer, something like <code>my-site</code></li>
+					<li>In your folder <code>my-site</code>, create a file called <code>index.html</code>
+						<ol>
+							<li>Open TextEdit on a Mac or Notepad on Windows.</li>
+							<li>Write something in <code>index.html</code> like: "Hi my name is ... and this is my
+								website."</li>
+							<li>Save.</li>
+						</ol>
+					</li>
+					<li>Double click <code>index.html</code> and it'll open in your default browser! You have a
+						website!</li>
+					<li>Now to publish it...</li>
+				</ol>
+			</section>
+
+			<section>
+				<h2>To Deploy A Website</h2>
+				<p>You can use any of the following to publish your website i.e to make it available for anyone to
+					access on the web.</p>
+			</section>
+
+			<section>
+				<h2>Deploy Options</h2>
+				<ul>
+					<li><a href="https://neocities.org/">neocities.org</a></li>
+					<li>
+						<a href="https://app.netlify.com/drop">app.netlify.com/drop</a> &mdash; (p.s can only
+						upload once before you have to create an account, so you might want to wait if you don't
+						want to create one)
+					</li>
+				</ul>
+			</section>
+
+			<section>
+				<h2>More Complex Websites</h2>
+				<p>Our site is pretty simple! It does not look as complicated or involved as a lot of
+					the websites we see out there. Why is that?</p>
+				<p>Websites are made up of plain text — you could paste in text from your Notes app and call it a
+					website.</p>
+				<p>But websites also consist of HTML elements/tags.</p>
+			</section>
+
+			<section>
+				<h2>HTML Tags</h2>
+				<p>We wrap parts of our page in tags to tell the web browser what they are.</p>
+				<p>If we wrap text in <code>&lt;h1&gt;&lt;/h1&gt;</code> this tells the browser that text is a
+					heading.</p>
+				<p>An HTML tag typically has an <em>opening</em> tag and a <em>closing</em> tag. The closing tag
+					looks identical to the opening tag, except it begins with a slash, <code>/</code>. The text goes
+					inside.</p>
+				<p><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements">This page lists all
+						the HTML elements, which are created using tag.</a></p>
+			</section>
+
+			<section>
+				<h3>Simple Formatting &amp; HTML-Only Styling</h3>
+				<p>Some HTML elements change how text is styled on the page.</p>
+				<p>Pick an element/tag from the <strong>
+						<a href="https://everythingyoucandoontheinter.net/styling-elements.html">
+							HTML Elements That Affect Text Styling</a></strong> page and add it to your
+					<code>index.html</code>. How does the text differ
+					from the rest of the unwrapped text on the page?
+				</p>
+			</section>
+
+			<section>
+				<p>Some HTML elements come with their own visual box — they change how content is
+					arranged/organized on the page, and may also include styling.</p>
+				<p>Try it yourself! Pick an element/tag from the <strong><a
+							href="https://everythingyoucandoontheinter.net/layout-elements.html">HTML Elements That
+							Affect
+							Layout</a></strong> page and add it to your <code>index.html</code>. How does it differ from
+					the rest of the unwrapped text on the page?</p>
+			</section>
+
+			<section>
+				<h2>CSS</h2>
+				<p>While some HTML elements do have styling built in, HTML is largely concerned with <strong>what
+						things are</strong>: this is a heading, this is a list, this is a paragraph.</p>
+				<p>To define <strong>how things look</strong>, the browser uses Cascading Style Sheets, or CSS.
+				</p>
+			</section>
+			<section>
+				<p>One way to include CSS is by using the <code>&lt;style&gt;</code> tag and putting CSS code
+					directly into it. For example:</p>
+				<pre><code class="hljs html" data-trim>
+&lt;style&gt;
+body {
+    font-family: 'Courier New';
+}
+&lt;/style&gt;
+				</code></pre>
+				<p>If you included this code somewhere on your webpage, it would change the font of the
+					<code>&lt;body&gt;</code> tag (so, all of the visible text on the page) to use that font.
+				</p>
+			</section>
+			<section>
+				<p>CSS styles can target HTML elements on the page and apply styles to them.</p>
+				<p>So if you want, for example, all the headings on the page to be the color red, with a
+					background of black:</p>
+				<pre><code class="hljs css" data-trim>
+h2, h3, h4, h5 {
+    color: 'red';
+    background-color: black;
+}
+					</code></pre>
+			</section>
+			<section>
+				<p>So the syntax is:</p>
+				<pre><code class="hljs" data-trim>
+[selector] {
+  [styles]
+}
+					</code></pre>
+			</section>
+
+			<section>
+				<h3>Selectors</h3>
+				<p>Selectors can be:</p>
+				<ul>
+					<li>the HTML tag, like <code>p</code> or <code>h2</code></li>
+					<li>a class you give to HTML tags — this can apply to multiple HTML elements</li>
+				</ul>
+				<pre><code class="hljs html" data-trim>&lt;p class="with-border"&gt;Hey my name is Yeli&lt;/p&gt;</code></pre>
+				<pre><code class="hljs css" data-trim>
+.with-border {
+	border: 1px dashed blue;
+}
+				</code></pre>
+			</section>
+			<section>
+				<p>Selectors can be:</p>
+				<ul>
+					<li>an ID you give to an HTML tag
+						<ul>
+							<li>IDs have to be unique, so only one HTML element/tag can have them</li>
+						</ul>
+					</li>
+				</ul>
+				<p>Self Exploration:</p>
+				<ul>
+					<li><a href="https://www.w3schools.com/cssref/css_selectors.php">CSS Selectors</a></li>
+					<li><a href="https://www.w3schools.com/cssref/index.php">List of CSS Properties</a></li>
+					<li><a href="https://www.w3schools.com/colors/colors_names.asp">List of CSS Colors</a></li>
+					<li><a
+							href="https://everythingyoucandoontheinter.net/layout.html">everythingyoucandoontheinter.net/layout.html</a>
+					</li>
+				</ul>
+			</section>
+			</section>
+
+			<section>
+				<h2>Seeing How A Website Is Built</h2>
+				<ul>
+					<li><a
+							href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Tools_and_setup/What_are_browser_developer_tools">Dev
+							Tools</a></li>
+					<li><a href="https://stealthiswebsite.art/">stealthiswebsite.art</a></li>
+					<li><a
+							href="https://chromewebstore.google.com/detail/webpage-x-ray/oodanccbjciflbmnglclgofbmdjpdeid?hl=en&pli=1">Web
+							XRay</a></li>
+					<li><a href="https://viewsource.info/">viewsource.info</a></li>
+				</ul>
+			</section>
+
+			<section>
+				<h1>Things You Can Explore On Your Own</h1>
+			</section>
+
+			<section>
+				<h3>Seeing How A Website Is Constructed (Extended)</h3>
+				<ul>
+					<li><a
+							href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Tools_and_setup/What_are_browser_developer_tools">Dev
+							Tools</a></li>
+					<li><a
+							href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Tools_and_setup/What_are_browser_developer_tools">Dev
+							Tools</a></li>
+					<li><a
+							href="https://chromewebstore.google.com/detail/webpage-x-ray/oodanccbjciflbmnglclgofbmdjpdeid?hl=en&pli=1">Web
+							XRay</a></li>
+					<li><a href="https://viewsource.info/">viewsource.info</a></li>
+				</ul>
+			</section>
+
+			<section>
+				<h3>The Collection Of Sites For This Workshop</h3>
+				<p><a href="https://everythingyoucandoontheinter.net/layout.html">everythingyoucandoontheinter.net</a>
+					&amp; the code for them.</p>
+			</section>
+
+			<section>
+				<h3>Adding Images To Your Page</h3>
+				<p><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/img">MDN:
+						<code>&lt;img&gt;</code> element</a></p>
+			</section>
+
+			<section>
+				<h3>If You Want A Better Code Editor...</h3>
+				<ul>
+					<li>VS Code</li>
+					<li>Sublime Text</li>
+				</ul>
+			</section>
+
+			<section>
+				<section>
+					<h3>Cooler / More Expressive Fonts</h3>
+					<a href="https://www.w3schools.com/cssref/css_websafe_fonts.php">Web-safe fonts</a> are
+					pre-installed typefaces on most operating systems and devices. So you can use them without
+					any extra work.</p>
+					<p>But there are a lot of other fonts that could make your website/poem more expressive.</p>
+					<p><a href="https://fonts.google.com/">fonts.google.com</a></p>
+				</section>
+				<section>
+					<p>This website uses the font Ojuju by a Nigerian designer: <a
+							href="https://kpojo.world/">kpojo.world</a></p>
+					<p>My other poem website, <a href="https://crawlspace.cool/grief-found-me">Grief Found Me</a> uses a
+						computer-y, monospace font, Departure Mono, to emulate the feel
+						of a desktop.</p>
+				</section>
+			</section>
+
+			<section>
+				<h3>More In-Depth Into HTML + CSS + JS...</h3>
+				<ul>
+					<li><a href="https://htmlforpeople.com/">htmlforpeople.com</a></li>
+					<li><a href="https://www.freecodecamp.org/learn/responsive-web-design-v9/">freeCodeCamp</a></li>
+					<li><a href="https://httpoetics.neocities.org/">httpoetics.neocities.org</a></li>
+				</ul>
+			</section>
+		</div>
+	</div>
+
+	<!-- Reveal.js JS from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+    
+    <!-- Reveal.js Highlight Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/highlight/highlight.min.js"></script>
+    
+    <!-- Highlight.js for code syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/notes/notes.min.js"></script>
+    <script>
+        // Initialize reveal.js
+        Reveal.initialize({
+            hash: true,
+            controls: true,
+            progress: true,
+            overview: true,
+            keyboard: true,
+            plugins: [ RevealHighlight, RevealNotes ]
+        });
+    </script>
+</body>
+
+</html>
