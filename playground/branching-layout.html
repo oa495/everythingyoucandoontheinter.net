@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Branching Layout — Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.topbar h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.topbar .controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar a {
+  font-size: 0.9rem;
+  color: #555;
+  text-decoration: none;
+}
+
+.topbar a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 7px 14px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}
+
+button:hover { background: #f5f5f5; }
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  padding: 0 20px;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: #666;
+}
+
+.tab.active {
+  color: #000;
+  font-weight: 600;
+  border-bottom-color: #000;
+}
+
+.filebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  color: #666;
+  border-bottom: 1px solid #eee;
+}
+
+.panes {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  min-height: 0;
+}
+
+@media (max-width: 800px) {
+  .panes { grid-template-columns: 1fr; }
+}
+
+.editor-pane, .preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-pane { border-right: 1px solid #ddd; }
+
+.preview-pane .filebar { border-right: none; }
+
+.CodeMirror {
+  flex: 1;
+  height: auto;
+  font-size: 0.9rem;
+}
+
+iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: white;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Branching Layout</h1>
+  <div class="controls">
+    <a href="../branching-layout.html">&larr; Back to page</a>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="panes">
+  <div class="editor-pane">
+    <div class="filebar">
+      <span id="activeFileName"></span>
+      <span id="status"></span>
+    </div>
+    <textarea id="editor"></textarea>
+  </div>
+  <div class="preview-pane">
+    <div class="filebar"><span>Preview</span></div>
+    <iframe id="preview" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script>
+// The three "files" are baked in at generation time (see
+// generate-playgrounds.mjs) so this page never needs to fetch anything —
+// it works over file://, a static host, or GitHub Pages equally well.
+const ORIGINAL = {
+  html: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>Branching Layout</title>\n<style>\n</style>\n</head>\n<body>\n\n<div id=\"tree\"></div>\n\n<script>\n<\/script>\n</body>\n</html>\n",
+  css: "  * { box-sizing: border-box; margin: 0; padding: 0; }\n\n  body {\n    font-family: \"Garamond\", serif;\n    font-size: 1rem;\n    padding: 40px;\n    line-height: 1.8;\n  }\n\n  /* The tree container */\n  #tree { white-space: pre; }\n\n  /* A clickable branch label */\n  .branch {\n    cursor: pointer;\n  }\n\n  .branch:hover { text-decoration: underline; }\n\n  /* The children that appear below a branch when expanded */\n  .children { display: none; }\n  .children.open { display: block; }",
+  js: "\n// ─────────────────────────────────────────────\n// THE STORY DATA\n//\n// The story is a tree of \"nodes.\"\n// Each node has:\n//   label    — the text shown in the tree\n//   children — an array of nodes that branch off from this one\n//              (if empty, it's a leaf / ending)\n// ─────────────────────────────────────────────\n\n\nconst story = {\n  label: \"i am running into a new year\",\n  children: [\n    {\n      label: \"and the old years blow back\",\n      children: [\n        {\n          label: \"like a wind\",\n          children: [\n            {\n              label: \"that i catch in my hair\",\n            }\n          ]\n        },\n        {\n          label: \"like strong fingers like\",\n          children: [\n            { label: \"all my old promises\", children: [] }\n          ]\n        },\n      ]\n    },\n    {\n      label: \"it will be hard to let go\",\n      children: [\n        { \n          label: \"of what i said to myself\", \n          children: [\n            { \n              label: \"about myself\",\n              children: [\n                { \n                  label: \"when i was sixteen and\",\n                  children: [\n                    { \n                      label: \"twenty-six and thirty-six\",\n                      children: [\n                        { \n                          label: \"even thirty-six \", \n                          children: [] \n                        }\n                      ] \n                    }\n                  ]\n                }\n              ] \n            }\n        ] }\n      ]\n    },\n    {\n      label: \"i am running into a new year\",\n      children: [\n        {\n          label: \"and i beg what i love and\",\n          children: [\n            { label: \"i leave to forgive me.\", children: [] }\n          ]\n        },\n      ]\n    }\n  ]\n};\n\n\n// ─────────────────────────────────────────────\n// BUILDING THE TREE\n//\n// buildNode() turns a node object into HTML.\n// It creates:\n//   - the label (clickable if the node has children)\n//   - a hidden <div> for the children\n//\n// When a label is clicked, the children div is\n// shown and the tree lines appear below it.\n// ─────────────────────────────────────────────\n\nfunction buildNode(node, prefix, isLast) {\n\n  // Tree drawing characters:\n  //   ├── means \"there are more items after this one\"\n  //   └── means \"this is the last item\"\n  const connector = isLast ? \"└── \" : \"├── \";\n  // The vertical line that runs down the left for child items\n  const childPrefix = prefix + (isLast ? \"    \" : \"│   \");\n\n  const wrapper = document.createElement(\"div\");\n\n  // ── The label line ──\n  const labelLine = document.createElement(\"span\");\n\n  // The indentation + connector (plain text, not clickable)\n  labelLine.appendChild(document.createTextNode(prefix + connector));\n\n  const children = node.children || [];\n\n  if (children.length > 0) {\n    // Nodes with children are clickable\n    const btn = document.createElement(\"span\");\n    btn.className = \"branch\";\n    btn.textContent = node.label;\n\n    // Build the children container (hidden at first)\n    const childrenDiv = document.createElement(\"div\");\n    childrenDiv.className = \"children\";\n\n    // Populate the children container\n    children.forEach(function(child, i) {\n      const isChildLast = (i === children.length - 1);\n      childrenDiv.appendChild(buildNode(child, childPrefix, isChildLast));\n    });\n\n    // Clicking the label toggles the children open/closed\n    btn.addEventListener(\"click\", function() {\n      childrenDiv.classList.toggle(\"open\");\n      btn.classList.add(\"visited\");\n    });\n\n    labelLine.appendChild(btn);\n    wrapper.appendChild(labelLine);\n    wrapper.appendChild(document.createTextNode(\"\\n\"));\n    wrapper.appendChild(childrenDiv);\n\n  } else {\n    // Leaf nodes (endings) are plain text — no click needed\n    labelLine.appendChild(document.createTextNode(node.label));\n    wrapper.appendChild(labelLine);\n    wrapper.appendChild(document.createTextNode(\"\\n\"));\n  }\n\n  return wrapper;\n}\n\n\n// ─────────────────────────────────────────────\n// RENDER THE ROOT NODE\n//\n// The root node is treated slightly differently —\n// it has no connector or indentation, and its\n// children are shown immediately.\n// ─────────────────────────────────────────────\n\nfunction render() {\n  const treeEl = document.getElementById(\"tree\");\n\n  // Root label (plain, always visible)\n  treeEl.appendChild(document.createTextNode(story.label + \"\\n\"));\n\n  // Root children (visible from the start)\n  const rootChildren = document.createElement(\"div\");\n  rootChildren.className = \"children open\";\n\n  story.children.forEach(function(child, i) {\n    const isLast = (i === story.children.length - 1);\n    rootChildren.appendChild(buildNode(child, \"\", isLast));\n  });\n\n  treeEl.appendChild(rootChildren);\n}\n\nrender();\n",
+};
+
+const files = [
+  { key: 'html', name: 'index.html', mode: 'htmlmixed' },
+  { key: 'css', name: 'style.css', mode: 'css' },
+  { key: 'js', name: 'script.js', mode: 'javascript' },
+];
+
+const storageKey = 'playground:branching-layout';
+
+const tabsEl = document.getElementById('tabs');
+const tabEls = {};
+for (const f of files) {
+  const tab = document.createElement('div');
+  tab.className = 'tab';
+  tab.textContent = f.name;
+  tab.addEventListener('click', () => switchFile(f.key));
+  tabsEl.appendChild(tab);
+  tabEls[f.key] = tab;
+}
+
+const activeFileNameEl = document.getElementById('activeFileName');
+const statusEl = document.getElementById('status');
+const preview = document.getElementById('preview');
+
+const cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
+  lineNumbers: true,
+  lineWrapping: true,
+  tabSize: 2,
+});
+
+const saved = localStorage.getItem(storageKey);
+let parts = saved ? JSON.parse(saved) : { ...ORIGINAL };
+let activeKey = null;
+statusEl.textContent = saved ? 'edited, autosaved locally' : 'original';
+
+function assembleSource() {
+  let source = parts.html;
+  source = source.replace(/<style>[\s\S]*?<\/style>/, `<style>
+${parts.css}
+<\/style>`);
+  source = source.replace(/<script>[\s\S]*?<\/script>/, `<script>
+${parts.js}
+<\/script>`);
+  return source;
+}
+
+function runPreview() {
+  preview.srcdoc = assembleSource();
+}
+
+function switchFile(key) {
+  if (activeKey) parts[activeKey] = cm.getValue();
+  activeKey = key;
+  const f = files.find((f) => f.key === key);
+  cm.setOption('mode', f.mode);
+  cm.setValue(parts[key]);
+  activeFileNameEl.textContent = f.name;
+  for (const k in tabEls) tabEls[k].classList.toggle('active', k === key);
+}
+
+let debounceTimer;
+cm.on('change', (instance, changeObj) => {
+  if (changeObj.origin === 'setValue') return;
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    parts[activeKey] = cm.getValue();
+    runPreview();
+    localStorage.setItem(storageKey, JSON.stringify(parts));
+    statusEl.textContent = 'edited, autosaved locally';
+  }, 400);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  localStorage.removeItem(storageKey);
+  parts = { ...ORIGINAL };
+  activeKey = null;
+  statusEl.textContent = 'original';
+  switchFile('html');
+  runPreview();
+});
+
+switchFile('html');
+runPreview();
+</script>
+</body>
+</html>

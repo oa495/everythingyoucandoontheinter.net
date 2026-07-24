@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Layout — Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.topbar h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.topbar .controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar a {
+  font-size: 0.9rem;
+  color: #555;
+  text-decoration: none;
+}
+
+.topbar a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 7px 14px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}
+
+button:hover { background: #f5f5f5; }
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  padding: 0 20px;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: #666;
+}
+
+.tab.active {
+  color: #000;
+  font-weight: 600;
+  border-bottom-color: #000;
+}
+
+.filebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  color: #666;
+  border-bottom: 1px solid #eee;
+}
+
+.panes {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  min-height: 0;
+}
+
+@media (max-width: 800px) {
+  .panes { grid-template-columns: 1fr; }
+}
+
+.editor-pane, .preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-pane { border-right: 1px solid #ddd; }
+
+.preview-pane .filebar { border-right: none; }
+
+.CodeMirror {
+  flex: 1;
+  height: auto;
+  font-size: 0.9rem;
+}
+
+iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: white;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Layout</h1>
+  <div class="controls">
+    <a href="../layout.html">&larr; Back to page</a>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="panes">
+  <div class="editor-pane">
+    <div class="filebar">
+      <span id="activeFileName"></span>
+      <span id="status"></span>
+    </div>
+    <textarea id="editor"></textarea>
+  </div>
+  <div class="preview-pane">
+    <div class="filebar"><span>Preview</span></div>
+    <iframe id="preview" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script>
+// The three "files" are baked in at generation time (see
+// generate-playgrounds.mjs) so this page never needs to fetch anything —
+// it works over file://, a static host, or GitHub Pages equally well.
+const ORIGINAL = {
+  html: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>i am running into a new year</title>\n<style>\n</style>\n</head>\n<body>\n\n<!-- The poem. Each <p> is one line.\n     Add <span class=\"...\"> around any word to style it (see the class list above). -->\n<div class=\"poem\">\n  <div class=\"stanza\">\n    <p>i am running into a new year</p>\n    <p>and the old years blow back</p>\n    <p>like a wind</p>\n    <p>that i catch in my hair</p>\n    <p>like strong fingers like</p>\n    <p>all my old promises and</p>\n    <p>it will be hard to let go</p>\n    <p>of what i said to myself</p>\n    <p>about myself</p>\n    <p>when i was sixteen and</p>\n    <p>twenty-six and thirty-six</p>\n    <p>even thirty-six but</p>\n    <p>i am running into a new year</p>\n    <p>and i beg what i love and</p>\n    <p>i leave to forgive me</p>\n  </div>\n</div>\n\n<!-- A centered editable area that fills the screen height.\n     contenteditable=\"true\" means you can click and type directly on the page.\n     outline: none removes the box that normally appears when you click into an editable area. -->\n<div style=\"display: flex; align-items: center; justify-content: center; height: 100vh;\">\n  <div contenteditable=\"true\" style=\"text-align: center; outline: none;\">\n    <!-- PASTE HERE TO CENTER ON THE PAGE -->\n  </div>\n</div>\n\n<!-- position: fixed keeps this control panel stuck to the bottom-left corner\n     even when you scroll the page. -->\n<div style=\"position: fixed; bottom: 20px; left: 20px; display: flex; flex-direction: column; gap: 6px;\">\n  <div>\n    font size\n    <!-- onclick= runs a JavaScript function when the button is clicked.\n         adjustPoem('fontSize', -1) shrinks the text; +1 grows it. -->\n    <button onclick=\"adjustPoem('fontSize', -1)\">−</button>\n    <button onclick=\"adjustPoem('fontSize', 1)\">+</button>\n  </div>\n  <div>\n    line height\n    <button onclick=\"adjustPoem('lineHeight', -0.1)\">−</button>\n    <button onclick=\"adjustPoem('lineHeight', 0.1)\">+</button>\n  </div>\n  <div>\n    <!-- onchange= runs when you pick a new option from the dropdown.\n         This changes the font of just the .poem element. -->\n    <select onchange=\"document.querySelector('.poem').style.fontFamily = this.value\">\n      <option value=\"\">default</option>\n      <option value=\"Georgia, serif\">Georgia</option>\n      <option value=\"'Garamond', serif\">Garamond</option>\n      <option value=\"Arial, sans-serif\">Arial</option>\n      <option value=\"'Courier New', monospace\">Courier New</option>\n      <option value=\"Impact, sans-serif\">Impact</option>\n      <option value=\"Palatino, serif\">Palatino</option>\n    </select>\n  </div>\n</div>\n\n<!-- <details> is a built-in HTML element that collapses/expands on click.\n     <summary> is the always-visible clickable label. -->\n<details style=\"position: fixed; bottom: 20px; right: 20px;\">\n  <summary>How to add formatting to a word</summary>\n  <p>Wrap the word in a <code>&lt;span&gt;</code> with a class:</p>\n  <pre><code>&lt;span class=\"squiggle\"&gt;word&lt;/span&gt;</code></pre>\n  <p>Available classes:</p>\n  <ul>\n    <li><code>squiggle</code> — wavy underline</li>\n    <li><code>size-up</code> — larger text</li>\n    <li><code>size-down</code> — smaller text</li>\n    <li><code>above</code> — lifted above the line</li>\n    <li><code>below</code> — dropped below the line</li>\n    <li><code>tracking-up</code> — letters farther apart</li>\n    <li><code>tracking-down</code> — letters closer together</li>\n  </ul>\n  <p>Classes can be combined: <code>&lt;span class=\"size-up tracking-up\"&gt;word&lt;/span&gt;</code></p>\n</details>\n\n<script>\n<\/script>\n</body>\n</html>\n",
+  css: "body {\n  margin: 60px;\n  font-family: \"Garamond\", serif;\n  font-size: 1em; /* how big or small the text is */\n  line-height: 1em; /* line-height is the distance from one line of text to the next */\n  color: black; /* change color here if you want a different color! */\n}\n.stanza {\n  margin-bottom: 1.6em;\n}\n.stanza p {\n  margin: 0;\n}\n\n/*\n  To style a word, wrap it in a span with a class:\n  <span class=\"squiggle\">word</span>\n\n  Available classes:\n    squiggle      wavy underline\n    size-up       larger text\n    size-down     smaller text\n    above         lifted above the line\n    below         dropped below the line\n    tracking-up   wider letter spacing\n    tracking-down tighter letter spacing\n\n  Classes can be combined:\n  <span class=\"size-up tracking-up\">word</span>\n*/\n\n.squiggle       { text-decoration: underline wavy; }\n.size-up        { font-size: 1.5em; }\n.size-down      { font-size: 0.65em; }\n/* position: relative + top lets an element move up or down without affecting the lines around it */\n.above          { position: relative; top: -0.5em; }\n.below          { position: relative; top: 0.5em; }\n/* letter-spacing controls the space between each character */\n.tracking-up    { letter-spacing: 0.2em; }\n.tracking-down  { letter-spacing: -0.05em; }",
+  js: "// These variables store the current font size and line height.\n// JavaScript needs to track them so the +/- buttons know what to add to.\nconst poem = document.querySelector('.poem');\nlet fontSize   = 16;\nlet lineHeight = 1.9;\n\n// adjustPoem is called by the +/- buttons.\n// prop  = which property to change ('fontSize' or 'lineHeight')\n// delta = how much to change it by (positive = bigger, negative = smaller)\nfunction adjustPoem(prop, delta) {\n  if (prop === 'fontSize') {\n    // Math.max(8, ...) prevents the font from going smaller than 8px\n    fontSize = Math.max(8, fontSize + delta);\n    poem.style.fontSize = fontSize + 'px';\n  } else {\n    // Math.round(... * 10) / 10 keeps the number to one decimal place\n    lineHeight = Math.max(0.8, Math.round((lineHeight + delta) * 10) / 10);\n    poem.style.lineHeight = lineHeight;\n  }\n}",
+};
+
+const files = [
+  { key: 'html', name: 'index.html', mode: 'htmlmixed' },
+  { key: 'css', name: 'style.css', mode: 'css' },
+  { key: 'js', name: 'script.js', mode: 'javascript' },
+];
+
+const storageKey = 'playground:layout';
+
+const tabsEl = document.getElementById('tabs');
+const tabEls = {};
+for (const f of files) {
+  const tab = document.createElement('div');
+  tab.className = 'tab';
+  tab.textContent = f.name;
+  tab.addEventListener('click', () => switchFile(f.key));
+  tabsEl.appendChild(tab);
+  tabEls[f.key] = tab;
+}
+
+const activeFileNameEl = document.getElementById('activeFileName');
+const statusEl = document.getElementById('status');
+const preview = document.getElementById('preview');
+
+const cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
+  lineNumbers: true,
+  lineWrapping: true,
+  tabSize: 2,
+});
+
+const saved = localStorage.getItem(storageKey);
+let parts = saved ? JSON.parse(saved) : { ...ORIGINAL };
+let activeKey = null;
+statusEl.textContent = saved ? 'edited, autosaved locally' : 'original';
+
+function assembleSource() {
+  let source = parts.html;
+  source = source.replace(/<style>[\s\S]*?<\/style>/, `<style>
+${parts.css}
+<\/style>`);
+  source = source.replace(/<script>[\s\S]*?<\/script>/, `<script>
+${parts.js}
+<\/script>`);
+  return source;
+}
+
+function runPreview() {
+  preview.srcdoc = assembleSource();
+}
+
+function switchFile(key) {
+  if (activeKey) parts[activeKey] = cm.getValue();
+  activeKey = key;
+  const f = files.find((f) => f.key === key);
+  cm.setOption('mode', f.mode);
+  cm.setValue(parts[key]);
+  activeFileNameEl.textContent = f.name;
+  for (const k in tabEls) tabEls[k].classList.toggle('active', k === key);
+}
+
+let debounceTimer;
+cm.on('change', (instance, changeObj) => {
+  if (changeObj.origin === 'setValue') return;
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    parts[activeKey] = cm.getValue();
+    runPreview();
+    localStorage.setItem(storageKey, JSON.stringify(parts));
+    statusEl.textContent = 'edited, autosaved locally';
+  }, 400);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  localStorage.removeItem(storageKey);
+  parts = { ...ORIGINAL };
+  activeKey = null;
+  statusEl.textContent = 'original';
+  switchFile('html');
+  runPreview();
+});
+
+switchFile('html');
+runPreview();
+</script>
+</body>
+</html>

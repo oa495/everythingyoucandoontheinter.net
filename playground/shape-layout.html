@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shape Layout — Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.topbar h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.topbar .controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar a {
+  font-size: 0.9rem;
+  color: #555;
+  text-decoration: none;
+}
+
+.topbar a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 7px 14px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}
+
+button:hover { background: #f5f5f5; }
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  padding: 0 20px;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: #666;
+}
+
+.tab.active {
+  color: #000;
+  font-weight: 600;
+  border-bottom-color: #000;
+}
+
+.filebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  color: #666;
+  border-bottom: 1px solid #eee;
+}
+
+.panes {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  min-height: 0;
+}
+
+@media (max-width: 800px) {
+  .panes { grid-template-columns: 1fr; }
+}
+
+.editor-pane, .preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-pane { border-right: 1px solid #ddd; }
+
+.preview-pane .filebar { border-right: none; }
+
+.CodeMirror {
+  flex: 1;
+  height: auto;
+  font-size: 0.9rem;
+}
+
+iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: white;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Shape Layout</h1>
+  <div class="controls">
+    <a href="../shape-layout.html">&larr; Back to page</a>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="panes">
+  <div class="editor-pane">
+    <div class="filebar">
+      <span id="activeFileName"></span>
+      <span id="status"></span>
+    </div>
+    <textarea id="editor"></textarea>
+  </div>
+  <div class="preview-pane">
+    <div class="filebar"><span>Preview</span></div>
+    <iframe id="preview" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script>
+// The three "files" are baked in at generation time (see
+// generate-playgrounds.mjs) so this page never needs to fetch anything —
+// it works over file://, a static host, or GitHub Pages equally well.
+const ORIGINAL = {
+  html: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>Shape Layout</title>\n<style>\n</style>\n</head>\n<body>\n\n<p style=\"position: fixed; top: 20px; left: 20px;\">Final Curve by Langston Hughes</p>\n\n<!-- The stage holds the SVG guide and the four text blocks.\n     contenteditable=\"true\" lets you click and type on each block. -->\n<div id=\"stage\">\n  <svg id=\"guide\"></svg>\n  <div class=\"block\" contenteditable=\"true\">When you turn the corner</div>\n  <div class=\"block\" contenteditable=\"true\">And you run into yourself</div>\n  <div class=\"block\" contenteditable=\"true\">Then you know that you have turned</div>\n  <div class=\"block\" contenteditable=\"true\">All the corners that are left</div>\n</div>\n\n<!-- Changing this dropdown calls applyShape(), which repositions the blocks -->\n<div id=\"controls\">\n  <select onchange=\"applyShape(this.value)\">\n    <option value=\"circle\">Circle</option>\n    <option value=\"rectangle\">Rectangle</option>\n    <option value=\"diagonal\">Diagonal</option>\n    <option value=\"wave\">Wave</option>\n  </select>\n</div>\n\n<script>\n<\/script>\n\n</body>\n</html>\n",
+  css: "* { box-sizing: border-box; margin: 0; padding: 0; }\n\n/* overflow: hidden prevents scrollbars from appearing when elements\n   are positioned near the edges of the screen */\nbody { overflow: hidden; }\n\n/* The stage fills the entire browser window.\n   100vw = 100% of the viewport width, 100vh = 100% of the viewport height.\n   position: relative is needed so absolutely-positioned children\n   are placed relative to this div, not the whole page. */\n#stage {\n  width: 100vw;\n  height: 100vh;\n  position: relative;\n}\n\n/* The SVG guide draws the dashed shape outline behind the text blocks.\n   pointer-events: none means you can't click on it — clicks pass through\n   to the text blocks underneath. */\n#guide {\n  position: absolute;\n  inset: 0; /* shorthand for top:0; right:0; bottom:0; left:0 — fills the stage */\n  width: 100%;\n  height: 100%;\n  pointer-events: none;\n}\n\n/* Each text block is positioned absolutely, meaning it's placed at exact\n   pixel coordinates set by JavaScript (left: and top:).\n   transform: translate(-50%, -50%) shifts the block so its CENTER sits\n   at those coordinates, rather than its top-left corner. */\n.block {\n  position: absolute;\n  transform: translate(-50%, -50%);\n  outline: none;     /* removes the focus ring when you click to edit */\n  text-align: center;\n  max-width: 180px;\n  cursor: text;\n}\n\n/* The shape selector dropdown, pinned to the bottom center of the screen */\n#controls {\n  position: fixed;\n  bottom: 20px;\n  left: 50%;\n  transform: translateX(-50%); /* centers the controls horizontally */\n}",
+  js: "// Grab references to the elements we'll need throughout\nconst blocks = [...document.querySelectorAll('.block')]; // the four text blocks\nconst stage  = document.getElementById('stage');\nconst guide  = document.getElementById('guide');\n\n// SVG elements need a special namespace when created with JavaScript\nconst ns   = 'http://www.w3.org/2000/svg';\n// Shared style for all guide lines: gray, dashed, no fill\nconst dash = 'fill:none;stroke:#ccc;stroke-width:1;stroke-dasharray:5,5';\n\n\n// ── getPositions ────────────────────────────────────────────────────────────\n// Returns an array of [x, y] coordinates — one for each of the 4 blocks.\n// w and h are the current width and height of the stage.\n// The coordinates are calculated as fractions of w/h so the layout\n// scales to any screen size.\n\nfunction getPositions(shape) {\n  const w = stage.offsetWidth;\n  const h = stage.offsetHeight;\n\n  if (shape === 'circle') {\n    const cx = w / 2;                      // center x\n    const cy = h / 2;                      // center y\n    const r  = Math.min(w, h) * 0.32;     // radius = 32% of the smaller dimension\n    // Place each block evenly around the circle using trigonometry.\n    // The angle starts at -π/2 so the first block appears at the top.\n    return [0, 1, 2, 3].map(i => {\n      const angle = (i / 4) * Math.PI * 2 - Math.PI / 2;\n      return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];\n    });\n  }\n\n  if (shape === 'rectangle') {\n    // Four corners of a rectangle that has a 10% margin from the edges\n    return [\n      [w / 2,   h * 0.1],  // top center\n      [w * 0.9, h / 2  ],  // right center\n      [w / 2,   h * 0.9],  // bottom center\n      [w * 0.1, h / 2  ]   // left center\n    ];\n  }\n\n  if (shape === 'diagonal') {\n    // Four evenly-spaced points along a top-left to bottom-right diagonal\n    return [0, 1, 2, 3].map(i => [\n      w * (0.12 + i * 0.25),\n      h * (0.12 + i * 0.25)\n    ]);\n  }\n\n  if (shape === 'wave') {\n    const A = h * 0.22; // amplitude — how tall the wave is\n    // Four points spread across the width, with y following a sine curve\n    return [0, 1, 2, 3].map(i => [\n      w * (0.12 + i * 0.25),\n      h / 2 + A * Math.sin(i * Math.PI / 2)\n    ]);\n  }\n}\n\n\n// ── drawGuide ────────────────────────────────────────────────────────────────\n// Draws a dashed SVG shape behind the text blocks so you can see the path.\n// SVG (Scalable Vector Graphics) lets you draw shapes with code.\n// Each shape type creates a different SVG element.\n\nfunction drawGuide(shape) {\n  guide.innerHTML = ''; // clear the previous guide shape\n  const w = stage.offsetWidth;\n  const h = stage.offsetHeight;\n\n  if (shape === 'circle') {\n    const el = document.createElementNS(ns, 'circle');\n    el.setAttribute('cx', w / 2);\n    el.setAttribute('cy', h / 2);\n    el.setAttribute('r',  Math.min(w, h) * 0.32);\n    el.setAttribute('style', dash);\n    guide.appendChild(el);\n  }\n\n  if (shape === 'rectangle') {\n    const el = document.createElementNS(ns, 'rect');\n    el.setAttribute('x',      w * 0.1);\n    el.setAttribute('y',      h * 0.1);\n    el.setAttribute('width',  w * 0.8);\n    el.setAttribute('height', h * 0.8);\n    el.setAttribute('style', dash);\n    guide.appendChild(el);\n  }\n\n  if (shape === 'diagonal') {\n    const el = document.createElementNS(ns, 'line');\n    el.setAttribute('x1', w * 0.12); el.setAttribute('y1', h * 0.12);\n    el.setAttribute('x2', w * 0.87); el.setAttribute('y2', h * 0.87);\n    el.setAttribute('style', dash);\n    guide.appendChild(el);\n  }\n\n  if (shape === 'wave') {\n    const A = h * 0.22;\n    // Build a path by calculating 101 points along the wave curve\n    // and connecting them with SVG \"M\" (move to) and \"L\" (line to) commands\n    const pts = Array.from({length: 101}, (_, i) => {\n      const t = i / 100; // t goes from 0 to 1 across the width\n      const x = w * (0.12 + t * 0.75);\n      const y = h / 2 + A * Math.sin(t * Math.PI * 1.5);\n      return `${i === 0 ? 'M' : 'L'}${x},${y}`;\n    }).join(' ');\n    const el = document.createElementNS(ns, 'path');\n    el.setAttribute('d', pts);\n    el.setAttribute('style', dash);\n    guide.appendChild(el);\n  }\n}\n\n\n// ── applyShape ───────────────────────────────────────────────────────────────\n// Called when you pick a shape from the dropdown.\n// Gets the positions, moves each block, then draws the guide.\n\nfunction applyShape(shape) {\n  const pos = getPositions(shape);\n  blocks.forEach((block, i) => {\n    block.style.left = pos[i][0] + 'px';\n    block.style.top  = pos[i][1] + 'px';\n  });\n  drawGuide(shape);\n}\n\n// Start with a circle when the page first loads\napplyShape('circle');",
+};
+
+const files = [
+  { key: 'html', name: 'index.html', mode: 'htmlmixed' },
+  { key: 'css', name: 'style.css', mode: 'css' },
+  { key: 'js', name: 'script.js', mode: 'javascript' },
+];
+
+const storageKey = 'playground:shape-layout';
+
+const tabsEl = document.getElementById('tabs');
+const tabEls = {};
+for (const f of files) {
+  const tab = document.createElement('div');
+  tab.className = 'tab';
+  tab.textContent = f.name;
+  tab.addEventListener('click', () => switchFile(f.key));
+  tabsEl.appendChild(tab);
+  tabEls[f.key] = tab;
+}
+
+const activeFileNameEl = document.getElementById('activeFileName');
+const statusEl = document.getElementById('status');
+const preview = document.getElementById('preview');
+
+const cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
+  lineNumbers: true,
+  lineWrapping: true,
+  tabSize: 2,
+});
+
+const saved = localStorage.getItem(storageKey);
+let parts = saved ? JSON.parse(saved) : { ...ORIGINAL };
+let activeKey = null;
+statusEl.textContent = saved ? 'edited, autosaved locally' : 'original';
+
+function assembleSource() {
+  let source = parts.html;
+  source = source.replace(/<style>[\s\S]*?<\/style>/, `<style>
+${parts.css}
+<\/style>`);
+  source = source.replace(/<script>[\s\S]*?<\/script>/, `<script>
+${parts.js}
+<\/script>`);
+  return source;
+}
+
+function runPreview() {
+  preview.srcdoc = assembleSource();
+}
+
+function switchFile(key) {
+  if (activeKey) parts[activeKey] = cm.getValue();
+  activeKey = key;
+  const f = files.find((f) => f.key === key);
+  cm.setOption('mode', f.mode);
+  cm.setValue(parts[key]);
+  activeFileNameEl.textContent = f.name;
+  for (const k in tabEls) tabEls[k].classList.toggle('active', k === key);
+}
+
+let debounceTimer;
+cm.on('change', (instance, changeObj) => {
+  if (changeObj.origin === 'setValue') return;
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    parts[activeKey] = cm.getValue();
+    runPreview();
+    localStorage.setItem(storageKey, JSON.stringify(parts));
+    statusEl.textContent = 'edited, autosaved locally';
+  }, 400);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  localStorage.removeItem(storageKey);
+  parts = { ...ORIGINAL };
+  activeKey = null;
+  statusEl.textContent = 'original';
+  switchFile('html');
+  runPreview();
+});
+
+switchFile('html');
+runPreview();
+</script>
+</body>
+</html>

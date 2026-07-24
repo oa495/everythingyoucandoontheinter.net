@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Layout Grid — Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.topbar h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.topbar .controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar a {
+  font-size: 0.9rem;
+  color: #555;
+  text-decoration: none;
+}
+
+.topbar a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 7px 14px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}
+
+button:hover { background: #f5f5f5; }
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  padding: 0 20px;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: #666;
+}
+
+.tab.active {
+  color: #000;
+  font-weight: 600;
+  border-bottom-color: #000;
+}
+
+.filebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  color: #666;
+  border-bottom: 1px solid #eee;
+}
+
+.panes {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  min-height: 0;
+}
+
+@media (max-width: 800px) {
+  .panes { grid-template-columns: 1fr; }
+}
+
+.editor-pane, .preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-pane { border-right: 1px solid #ddd; }
+
+.preview-pane .filebar { border-right: none; }
+
+.CodeMirror {
+  flex: 1;
+  height: auto;
+  font-size: 0.9rem;
+}
+
+iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: white;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Layout Grid</h1>
+  <div class="controls">
+    <a href="../layout-grid.html">&larr; Back to page</a>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="panes">
+  <div class="editor-pane">
+    <div class="filebar">
+      <span id="activeFileName"></span>
+      <span id="status"></span>
+    </div>
+    <textarea id="editor"></textarea>
+  </div>
+  <div class="preview-pane">
+    <div class="filebar"><span>Preview</span></div>
+    <iframe id="preview" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script>
+// The three "files" are baked in at generation time (see
+// generate-playgrounds.mjs) so this page never needs to fetch anything —
+// it works over file://, a static host, or GitHub Pages equally well.
+const ORIGINAL = {
+  html: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>Layout Grid</title>\n<style>\n</style>\n</head>\n<body>\n\n<!-- The dropdown that switches between layouts.\n     onchange= runs showLayout() each time you pick a new option.\n     this.value is the currently selected option's value= attribute. -->\n<div id=\"controls\">\n  <select onchange=\"showLayout(this.value)\">\n    <option value=\"calendar\">Calendar</option>\n    <option value=\"axis\">Axis</option>\n    <option value=\"garden\">Garden Layout</option>\n    <option value=\"floorplan\">Apartment Floorplan</option>\n  </select>\n</div>\n\n<!-- CALENDAR\n     contenteditable=\"true\" means you can click on any cell and type in it.\n     Each <div class=\"cell\"> is one grid cell — they fill the 7-column grid in order. -->\n<h4>Spring By Edna St. Vincent Millay</h4>\n<div id=\"calendar\" class=\"layout active\">\n  <div class=\"cell\" contenteditable=\"true\">\n    To what purpose, April, do you return again? <br>\n    Beauty is not enough.\n  </div>\n  <div class=\"cell\" contenteditable=\"true\">\n    You can no longer quiet me with the redness <br>\n    Of little leaves opening stickily.\n  </div>\n  <div class=\"cell\" contenteditable=\"true\">\n    I know what I know. <br>\n    The sun is hot on my neck as I observe\n  </div>\n  <div class=\"cell\" contenteditable=\"true\">\n    The spikes of the crocus. <br>\n    The smell of the earth is good.\n  </div>\n  <div class=\"cell\" contenteditable=\"true\">\n    It is apparent that there is no death. <br>\n    But what does that signify?\n  </div>\n  <div class=\"cell\" contenteditable=\"true\">\n\n    Not only under ground are the brains of men <br>\n    Eaten by maggots.\n  </div>\n  <div class=\"cell\" contenteditable=\"true\">\n      Life in itself <br>\n    Is nothing,\n  </div>\n\n  <div class=\"cell\" contenteditable=\"true\">\n    An empty cup, a flight of uncarpeted stairs. <br>\n    It is not enough that yearly, down this hill,\n  </div>\n  <div class=\"cell\" contenteditable=\"true\">\n    April <br>\n    Comes like an idiot, babbling and strewing flowers.\n  </div>\n  <div class=\"cell\" contenteditable=\"true\">\n    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n  </div>\n  <div class=\"cell\" contenteditable=\"true\">\n    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n  </div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n  <div class=\"cell\" contenteditable=\"true\">    <img width=\"60%\" src=\"https://d2w9rnfcy7mm78.cloudfront.net/28783304/original_642f116088e0fab95429c2fafc57a16e.jpg?1718465816?bc=0\" alt=\"April Flowers\"/>\n</div>\n</div>\n\n<!-- AXIS\n     Each cell uses style=\"grid-area: ...\" to place itself in the named area\n     defined in the CSS grid-template-areas above. -->\n<div id=\"axis\" class=\"layout\">\n  <div class=\"cell quadrant\" style=\"grid-area: q2;\">II</div>\n  <div class=\"axis-line\"     style=\"grid-area: y-top;\"></div>\n  <div class=\"cell quadrant\" style=\"grid-area: q1;\">I</div>\n  <div class=\"axis-line\"     style=\"grid-area: x-left;\"></div>\n  <div class=\"axis-line\"     style=\"grid-area: origin;\"></div>\n  <div class=\"axis-line\"     style=\"grid-area: x-right;\"></div>\n  <div class=\"cell quadrant\" style=\"grid-area: q3;\">III</div>\n  <div class=\"axis-line\"     style=\"grid-area: y-bot;\"></div>\n  <div class=\"cell quadrant\" style=\"grid-area: q4;\">IV</div>\n</div>\n\n<!-- GARDEN\n     Try changing the letters (a, b, c…) in the grid-template-areas CSS above\n     to rearrange which cells share space. -->\n<div id=\"garden\" class=\"layout\">\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: a;\">a</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: b;\">b</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: c;\">c</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: d;\">d</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: e;\">e</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: f;\">f</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: g;\">g</div>\n</div>\n\n<!-- FLOORPLAN -->\n<div id=\"floorplan\" class=\"layout\">\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: a;\">a</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: b;\">b</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: c;\">c</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: d;\">d</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: e;\">e</div>\n  <div class=\"cell\" contenteditable=\"true\" style=\"grid-area: f;\">f</div>\n</div>\n\n<script>\n<\/script>\n\n</body>\n</html>\n",
+  css: "* { box-sizing: border-box; margin: 0; padding: 0; }\n\nbody { padding: 40px; font-family: \"Garamond\", serif; }\n\n#controls { margin-bottom: 24px; }\n\n/* All layouts are hidden by default. Only the one with class=\"active\" is shown.\n   The JavaScript below adds/removes the \"active\" class when you use the dropdown. */\n.layout        { display: none; }\n.layout.active { display: grid; }\n\n/* Every cell in every grid shares these base styles */\n.cell {\n  border: 1px solid black;\n  padding: 10px;\n  display: flex;\n  align-items: center;    /* center content vertically */\n  justify-content: center; /* center content horizontally */\n  text-align: left;\n}\n\n\n/* ── CALENDAR ──────────────────────────────────────────\n   repeat(7, 1fr) creates 7 equal columns (one per day).\n   1fr means \"1 fraction of the available space.\"\n   grid-auto-rows sets the height of each row automatically. */\n#calendar {\n  grid-template-columns: repeat(7, 1fr);\n  grid-auto-rows: 20vh; /* vh = viewport height — 20vh is 20% of the screen height */\n}\n\n\n/* ── AXIS ──────────────────────────────────────────────\n   grid-template-areas lets you draw the layout as ASCII art.\n   Each quoted string is one row; each word is one cell's name.\n   A cell can span multiple columns/rows by repeating its name.\n   The thin lines are 2px-wide cells with a black background. */\n#axis {\n  grid-template-columns: 1fr 2px 1fr; /* two panels separated by a 2px line */\n  grid-template-rows: 1fr 2px 1fr;    /* same idea vertically */\n  grid-template-areas:\n    \"q2      y-top   q1\"\n    \"x-left  origin  x-right\"\n    \"q3      y-bot   q4\";\n  height: 70vh;\n  max-width: 700px;\n}\n#axis .axis-line { background: black; } /* the cross lines */\n#axis .quadrant  { border: none; font-size: 0.85rem; }\n\n\n/* ── GARDEN ────────────────────────────────────────────\n   Named areas let irregular shapes span multiple cells.\n   Area \"a\" spans all 4 columns in the first row.\n   Areas \"f\" and \"g\" each span 2 columns in the last row. */\n#garden {\n  grid-template-columns: 1fr 1fr 1fr 1fr;\n  grid-template-rows: 50px 1fr 1fr;\n  grid-template-areas:\n    \"a   a   a   a\"\n    \"b   c   d   e\"\n    \"f   f   g   g\";\n  height: 60vh;\n  max-width: 700px;\n}\n\n\n/* ── FLOORPLAN ─────────────────────────────────────────\n   Columns use different fr values to make some rooms wider.\n   2fr is twice as wide as 1fr.\n   Area \"a\" spans two rows (notice it appears in rows 1 and 2). */\n#floorplan {\n  grid-template-columns: 2fr 1.5fr 1fr;\n  grid-template-rows: 1.5fr 1.5fr 0.25fr 1fr 1fr;\n  grid-template-areas:\n    \"a   a   b\"\n    \"a   a   c\"\n    \"d   d   d\"  /* hallway — very short row (0.25fr) */\n    \"e   f   f\"\n    \"e   f   f\";\n  height: 70vh;\n  max-width: 600px;\n}",
+  js: "// showLayout hides all layouts, then shows the one you picked.\n// id is the value= of the selected <option> — e.g. \"calendar\" or \"axis\".\nfunction showLayout(id) {\n  // Remove \"active\" from every layout (hides them all)\n  document.querySelectorAll('.layout').forEach(el => el.classList.remove('active'));\n  // Add \"active\" to just the chosen layout (shows it)\n  document.getElementById(id).classList.add('active');\n}",
+};
+
+const files = [
+  { key: 'html', name: 'index.html', mode: 'htmlmixed' },
+  { key: 'css', name: 'style.css', mode: 'css' },
+  { key: 'js', name: 'script.js', mode: 'javascript' },
+];
+
+const storageKey = 'playground:layout-grid';
+
+const tabsEl = document.getElementById('tabs');
+const tabEls = {};
+for (const f of files) {
+  const tab = document.createElement('div');
+  tab.className = 'tab';
+  tab.textContent = f.name;
+  tab.addEventListener('click', () => switchFile(f.key));
+  tabsEl.appendChild(tab);
+  tabEls[f.key] = tab;
+}
+
+const activeFileNameEl = document.getElementById('activeFileName');
+const statusEl = document.getElementById('status');
+const preview = document.getElementById('preview');
+
+const cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
+  lineNumbers: true,
+  lineWrapping: true,
+  tabSize: 2,
+});
+
+const saved = localStorage.getItem(storageKey);
+let parts = saved ? JSON.parse(saved) : { ...ORIGINAL };
+let activeKey = null;
+statusEl.textContent = saved ? 'edited, autosaved locally' : 'original';
+
+function assembleSource() {
+  let source = parts.html;
+  source = source.replace(/<style>[\s\S]*?<\/style>/, `<style>
+${parts.css}
+<\/style>`);
+  source = source.replace(/<script>[\s\S]*?<\/script>/, `<script>
+${parts.js}
+<\/script>`);
+  return source;
+}
+
+function runPreview() {
+  preview.srcdoc = assembleSource();
+}
+
+function switchFile(key) {
+  if (activeKey) parts[activeKey] = cm.getValue();
+  activeKey = key;
+  const f = files.find((f) => f.key === key);
+  cm.setOption('mode', f.mode);
+  cm.setValue(parts[key]);
+  activeFileNameEl.textContent = f.name;
+  for (const k in tabEls) tabEls[k].classList.toggle('active', k === key);
+}
+
+let debounceTimer;
+cm.on('change', (instance, changeObj) => {
+  if (changeObj.origin === 'setValue') return;
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    parts[activeKey] = cm.getValue();
+    runPreview();
+    localStorage.setItem(storageKey, JSON.stringify(parts));
+    statusEl.textContent = 'edited, autosaved locally';
+  }, 400);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  localStorage.removeItem(storageKey);
+  parts = { ...ORIGINAL };
+  activeKey = null;
+  statusEl.textContent = 'original';
+  switchFile('html');
+  runPreview();
+});
+
+switchFile('html');
+runPreview();
+</script>
+</body>
+</html>

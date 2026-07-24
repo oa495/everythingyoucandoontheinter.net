@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HTML Elements That Only Change Styling — Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.topbar h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.topbar .controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar a {
+  font-size: 0.9rem;
+  color: #555;
+  text-decoration: none;
+}
+
+.topbar a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 7px 14px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}
+
+button:hover { background: #f5f5f5; }
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  padding: 0 20px;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: #666;
+}
+
+.tab.active {
+  color: #000;
+  font-weight: 600;
+  border-bottom-color: #000;
+}
+
+.filebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  color: #666;
+  border-bottom: 1px solid #eee;
+}
+
+.panes {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  min-height: 0;
+}
+
+@media (max-width: 800px) {
+  .panes { grid-template-columns: 1fr; }
+}
+
+.editor-pane, .preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-pane { border-right: 1px solid #ddd; }
+
+.preview-pane .filebar { border-right: none; }
+
+.CodeMirror {
+  flex: 1;
+  height: auto;
+  font-size: 0.9rem;
+}
+
+iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: white;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>HTML Elements That Only Change Styling</h1>
+  <div class="controls">
+    <a href="../styling-elements.html">&larr; Back to page</a>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="panes">
+  <div class="editor-pane">
+    <div class="filebar">
+      <span id="activeFileName"></span>
+      <span id="status"></span>
+    </div>
+    <textarea id="editor"></textarea>
+  </div>
+  <div class="preview-pane">
+    <div class="filebar"><span>Preview</span></div>
+    <iframe id="preview" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script>
+// The three "files" are baked in at generation time (see
+// generate-playgrounds.mjs) so this page never needs to fetch anything —
+// it works over file://, a static host, or GitHub Pages equally well.
+const ORIGINAL = {
+  html: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>HTML Elements That Only Change Styling</title>\n<style>\n</style>\n</head>\n<body>\n\n<h1>HTML Elements That Only Change Styling</h1>\n<p class=\"intro\">\n  Every tag below is inline: it changes how its text looks — weight, style, size, decoration —\n  without creating a new box or affecting the layout around it, unlike the tags on the\n  <a href=\"layout-elements.html\">layout elements</a> page. Click the button to get a random one.\n</p>\n\n<!-- The picker is its own section so the button + result stay easy to find\n     while scrolling through the reference list below. -->\n<div class=\"picker\">\n  <button onclick=\"pickRandom()\">Pick a Random Styling Element</button>\n  <pre id=\"result\">click the button <- </pre>\n</div>\n\n<h2>Emphasis &amp; Importance</h2>\n<ul id=\"list-emphasis\"></ul>\n\n<h2>Size &amp; Position</h2>\n<ul id=\"list-sizePosition\"></ul>\n\n<h2>Edits &amp; Corrections</h2>\n<ul id=\"list-edits\"></ul>\n\n<h2>Code &amp; Technical</h2>\n<ul id=\"list-code\"></ul>\n\n<h2>Semantic Inline</h2>\n<ul id=\"list-semantic\"></ul>\n\n<h2>Generic</h2>\n<ul id=\"list-generic\"></ul>\n\n<script>\n<\/script>\n</body>\n</html>\n",
+  css: "* { box-sizing: border-box; margin: 0; padding: 0; }\n\nbody {\n  padding: 40px;\n  max-width: 700px;\n  font-family: \"Garamond\", \"Times New Roman\", serif;\n  line-height: 1.5;\n}\n\nh1 { margin-bottom: 0.5rem; }\n\np.intro { margin-bottom: 2rem; max-width: 55ch; }\n\nh2 {\n  margin-top: 2rem;\n  margin-bottom: 0.5rem;\n  font-size: 1.1rem;\n  text-transform: uppercase;\n  letter-spacing: 0.05em;\n}\n\nul { list-style: none; margin-bottom: 1rem; }\n\nli {\n  display: flex;\n  gap: 8px;\n  padding: 4px 0;\n  font-size: 1rem;\n}\n\nli code {\n  flex: 0 0 110px;\n  font-family: \"Courier New\", monospace;\n  background: #f0efe9;\n  padding: 2px 6px;\n  border-radius: 3px;\n}\n\n/* position: sticky keeps the picker visible while scrolling the tag list */\n.picker {\n  position: sticky;\n  top: 0;\n  background: white;\n  padding: 16px 0;\n  border-bottom: 2px solid black;\n  margin-bottom: 1rem;\n}\n\nbutton {\n  font-family: inherit;\n  font-size: 1rem;\n  padding: 8px 16px;\n  cursor: pointer;\n}\n\npre {\n  margin-top: 12px;\n  padding: 12px 16px;\n  background: #1e1e1e;\n  color: #eaeaea;\n  font-family: \"Courier New\", monospace;\n  font-size: 1.1rem;\n  border-radius: 4px;\n  display: inline-block;\n  /* user-select makes it obvious/easy to select-all for copying */\n  user-select: all;\n}",
+  js: "// Each entry: [tag, note]. All of these are inline elements with a closing tag,\n// so unlike layout-elements.html there's no void-tag case to handle here.\nconst categories = {\n  emphasis: [\n    ['em', 'italicizes text, semantically stressed'],\n    ['strong', 'bolds text, semantically important'],\n    ['b', 'bolds text, no semantic weight'],\n    ['i', 'italicizes text, no semantic weight'],\n    ['u', 'underlines text'],\n    ['mark', 'highlights text, usually with a yellow background'],\n  ],\n  sizePosition: [\n    ['small', 'renders text smaller, for fine print'],\n    ['sub', 'renders text lower and smaller, for subscripts'],\n    ['sup', 'renders text higher and smaller, for superscripts'],\n  ],\n  edits: [\n    ['ins', 'underlines text to show it was inserted'],\n    ['del', 'strikes through text to show it was removed'],\n    ['s', 'strikes through text that is no longer accurate'],\n  ],\n  code: [\n    ['code', 'renders text in a monospace font'],\n    ['kbd', 'renders text in a monospace font, for keyboard input'],\n    ['samp', 'renders text in a monospace font, for sample output'],\n    ['var', 'italicizes text, for variables'],\n  ],\n  semantic: [\n    ['abbr', 'adds a dotted underline, with a tooltip on the title attribute'],\n    ['cite', 'italicizes text, for the title of a work'],\n    ['q', 'wraps text in quotation marks'],\n    ['dfn', 'italicizes text, for the term being defined'],\n    ['time', 'no default style change, marks a date or time'],\n    ['data', 'no default style change, pairs text with a machine-readable value'],\n  ],\n  generic: [\n    ['span', 'a plain inline wrapper with no default style of its own'],\n  ],\n};\n\n// Flatten every [tag, note] pair into one array so the random picker\n// can draw from all categories at once.\nconst allTags = Object.values(categories).flat();\n\nfunction snippetFor(tag) {\n  return `<${tag}></${tag}>`;\n}\n\n// Fill in each category's <ul> from the data above.\nfor (const [key, entries] of Object.entries(categories)) {\n  const list = document.getElementById(`list-${key}`);\n  for (const [tag, note] of entries) {\n    const li = document.createElement('li');\n    const code = document.createElement('code');\n    code.textContent = snippetFor(tag);\n    const span = document.createElement('span');\n    span.textContent = note;\n    li.append(code, span);\n    list.appendChild(li);\n  }\n}\n\nfunction pickRandom() {\n  const [tag] = allTags[Math.floor(Math.random() * allTags.length)];\n  document.getElementById('result').textContent = snippetFor(tag);\n}",
+};
+
+const files = [
+  { key: 'html', name: 'index.html', mode: 'htmlmixed' },
+  { key: 'css', name: 'style.css', mode: 'css' },
+  { key: 'js', name: 'script.js', mode: 'javascript' },
+];
+
+const storageKey = 'playground:styling-elements';
+
+const tabsEl = document.getElementById('tabs');
+const tabEls = {};
+for (const f of files) {
+  const tab = document.createElement('div');
+  tab.className = 'tab';
+  tab.textContent = f.name;
+  tab.addEventListener('click', () => switchFile(f.key));
+  tabsEl.appendChild(tab);
+  tabEls[f.key] = tab;
+}
+
+const activeFileNameEl = document.getElementById('activeFileName');
+const statusEl = document.getElementById('status');
+const preview = document.getElementById('preview');
+
+const cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
+  lineNumbers: true,
+  lineWrapping: true,
+  tabSize: 2,
+});
+
+const saved = localStorage.getItem(storageKey);
+let parts = saved ? JSON.parse(saved) : { ...ORIGINAL };
+let activeKey = null;
+statusEl.textContent = saved ? 'edited, autosaved locally' : 'original';
+
+function assembleSource() {
+  let source = parts.html;
+  source = source.replace(/<style>[\s\S]*?<\/style>/, `<style>
+${parts.css}
+<\/style>`);
+  source = source.replace(/<script>[\s\S]*?<\/script>/, `<script>
+${parts.js}
+<\/script>`);
+  return source;
+}
+
+function runPreview() {
+  preview.srcdoc = assembleSource();
+}
+
+function switchFile(key) {
+  if (activeKey) parts[activeKey] = cm.getValue();
+  activeKey = key;
+  const f = files.find((f) => f.key === key);
+  cm.setOption('mode', f.mode);
+  cm.setValue(parts[key]);
+  activeFileNameEl.textContent = f.name;
+  for (const k in tabEls) tabEls[k].classList.toggle('active', k === key);
+}
+
+let debounceTimer;
+cm.on('change', (instance, changeObj) => {
+  if (changeObj.origin === 'setValue') return;
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    parts[activeKey] = cm.getValue();
+    runPreview();
+    localStorage.setItem(storageKey, JSON.stringify(parts));
+    statusEl.textContent = 'edited, autosaved locally';
+  }, 400);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  localStorage.removeItem(storageKey);
+  parts = { ...ORIGINAL };
+  activeKey = null;
+  statusEl.textContent = 'original';
+  switchFile('html');
+  runPreview();
+});
+
+switchFile('html');
+runPreview();
+</script>
+</body>
+</html>

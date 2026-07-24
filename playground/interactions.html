@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Interactions — Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.topbar h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.topbar .controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar a {
+  font-size: 0.9rem;
+  color: #555;
+  text-decoration: none;
+}
+
+.topbar a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 7px 14px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}
+
+button:hover { background: #f5f5f5; }
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  padding: 0 20px;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: #666;
+}
+
+.tab.active {
+  color: #000;
+  font-weight: 600;
+  border-bottom-color: #000;
+}
+
+.filebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  color: #666;
+  border-bottom: 1px solid #eee;
+}
+
+.panes {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  min-height: 0;
+}
+
+@media (max-width: 800px) {
+  .panes { grid-template-columns: 1fr; }
+}
+
+.editor-pane, .preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-pane { border-right: 1px solid #ddd; }
+
+.preview-pane .filebar { border-right: none; }
+
+.CodeMirror {
+  flex: 1;
+  height: auto;
+  font-size: 0.9rem;
+}
+
+iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: white;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Interactions</h1>
+  <div class="controls">
+    <a href="../interactions.html">&larr; Back to page</a>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="panes">
+  <div class="editor-pane">
+    <div class="filebar">
+      <span id="activeFileName"></span>
+      <span id="status"></span>
+    </div>
+    <textarea id="editor"></textarea>
+  </div>
+  <div class="preview-pane">
+    <div class="filebar"><span>Preview</span></div>
+    <iframe id="preview" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script>
+// The three "files" are baked in at generation time (see
+// generate-playgrounds.mjs) so this page never needs to fetch anything —
+// it works over file://, a static host, or GitHub Pages equally well.
+const ORIGINAL = {
+  html: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Everything We Can Do on the Web</title>\n<style>\n</style>\n</head>\n<body>\n<div class=\"grid\">\n\n  <!-- 1. CLICK -->\n  <div class=\"box\">\n    <div class=\"box-label\">Click</div>\n    <div class=\"box-body\">\n      <button id=\"click-btn\">Click me</button>\n      <p id=\"click-count\">0 clicks</p>\n      <span class=\"friction\">friction: low</span>\n    </div>\n  </div>\n\n  <!-- 2. DOUBLE-CLICK -->\n  <div class=\"box\">\n    <div class=\"box-label\">Double-click</div>\n    <div class=\"box-body\">\n      <div id=\"dbl-target\">Double-click<br>to toggle</div>\n      <p id=\"dbl-hint\">Try it!</p>\n      <span class=\"friction\">friction: low</span>\n    </div>\n  </div>\n\n  <!-- 3. CLICK AND HOLD -->\n  <div class=\"box\">\n    <div class=\"box-label\">Click and Hold</div>\n    <div class=\"box-body\">\n      <button id=\"hold-btn\">Hold me down</button>\n      <div id=\"hold-track\"><div id=\"hold-bar\"></div></div>\n      <p id=\"hold-hint\">Hold to fill the bar</p>\n      <span class=\"friction\">friction: medium</span>\n    </div>\n  </div>\n\n  <!-- 4. DRAG -->\n  <div class=\"box\">\n    <div class=\"box-label\">Drag</div>\n    <div class=\"box-body\">\n      <div id=\"drag-item\" draggable=\"true\">DRAG<br>ME</div>\n      <p>Drag me to the Drop box →</p>\n      <span class=\"friction\">friction: high</span>\n    </div>\n  </div>\n\n  <!-- 5. DROP -->\n  <div class=\"box\">\n    <div class=\"box-label\">Drop</div>\n    <div class=\"box-body\">\n      <div id=\"drop-zone\">Drop something<br>here</div>\n      <span class=\"friction\">friction: high</span>\n    </div>\n  </div>\n\n  <!-- 6. HOVER -->\n  <div class=\"box\">\n    <div class=\"box-label\">Hover</div>\n    <div class=\"box-body\">\n      <div id=\"hover-card\">Hover over me</div>\n      <p>Move your cursor over the card</p>\n      <span class=\"friction\">friction: none</span>\n    </div>\n  </div>\n\n  <!-- 7. SCROLL WHEEL -->\n  <div class=\"box\">\n    <div class=\"box-label\">Scroll Wheel</div>\n    <div class=\"box-body\">\n      <div id=\"scroll-inner\">\n        <p>Use your scroll wheel or trackpad to scroll through this text.</p>\n        <p>The web was one of the first interfaces where scrolling became a primary mode of navigation — the infinite canvas, revealed by the wheel.</p>\n        <p>Before the scroll wheel was common, users clicked scrollbar arrows one notch at a time.</p>\n        <p>Today, trackpad gestures, touchscreen swipes, and the scroll wheel all map to the same underlying browser scroll event.</p>\n        <p>The scroll wheel also controls zoom in many applications (Cmd/Ctrl + scroll).</p>\n        <p>You've reached the bottom!</p>\n      </div>\n      <span class=\"friction\">friction: low</span>\n    </div>\n  </div>\n\n  <!-- 8. CLICK + DRAG TO SELECT -->\n  <div class=\"box\">\n    <div class=\"box-label\">Click + Drag to Select</div>\n    <div class=\"box-body\">\n      <p id=\"selectable-text\">Click and drag across this text to highlight and select it. You can select a single word, an entire sentence, or any arbitrary run of characters across this passage.</p>\n      <p id=\"selection-count\">Nothing selected</p>\n      <span class=\"friction\">friction: medium</span>\n    </div>\n  </div>\n\n  <!-- 9. LINK -->\n  <div class=\"box\">\n    <div class=\"box-label\">Link</div>\n    <div class=\"box-body\">\n      <div class=\"link-list\">\n        <div>\n          <a href=\"#\">An unvisited link</a>\n          <span class=\"link-label\">blue</span>\n        </div>\n        <div>\n          <a href=\"\" onclick=\"return false;\" class=\"visited-demo\">A visited link</a>\n          <span class=\"link-label\">purple</span>\n        </div>\n        <div>\n          <a href=\"#\" target=\"_blank\">Opens in new tab ↗</a>\n          <span class=\"link-label\">target=\"_blank\"</span>\n        </div>\n        <div>\n          <a href=\"./this-page-does-not-exist.html\">A broken link</a>\n          <span class=\"link-label\">404</span>\n        </div>\n      </div>\n      <span class=\"friction\">friction: low</span>\n    </div>\n  </div>\n\n  <!-- 10. SELECT -->\n  <div class=\"box\">\n    <div class=\"box-label\">Select</div>\n    <div class=\"box-body\">\n      <select id=\"dropdown\">\n        <option value=\"\">— Choose a color —</option>\n        <option value=\"Red\">Red</option>\n        <option value=\"Orange\">Orange</option>\n        <option value=\"Yellow\">Yellow</option>\n        <option value=\"Green\">Green</option>\n        <option value=\"Blue\">Blue</option>\n        <option value=\"Purple\">Purple</option>\n      </select>\n      <p id=\"dropdown-out\">No selection yet</p>\n      <span class=\"friction\">friction: low</span>\n    </div>\n  </div>\n\n  <!-- 11. TEXT INPUT -->\n  <div class=\"box\">\n    <div class=\"box-label\">Text Input</div>\n    <div class=\"box-body\">\n      <input type=\"text\" id=\"text-field\" placeholder=\"Type something here…\" maxlength=\"80\">\n      <p id=\"char-count\">0 / 80 characters</p>\n      <span class=\"friction\">friction: high</span>\n    </div>\n  </div>\n\n  <!-- 12. CHECKBOX -->\n  <div class=\"box\">\n    <div class=\"box-label\">Checkbox</div>\n    <div class=\"box-body\">\n      <div class=\"check-group\">\n        <label><input type=\"checkbox\"> Option A</label>\n        <label><input type=\"checkbox\" checked> Option B (default on)</label>\n        <label><input type=\"checkbox\"> Option C</label>\n        <label><input type=\"checkbox\" disabled> Option D (disabled)</label>\n      </div>\n      <span class=\"friction\">friction: low</span>\n    </div>\n  </div>\n\n  <!-- 13. RADIO BUTTON -->\n  <div class=\"box\">\n    <div class=\"box-label\">Radio Button</div>\n    <div class=\"box-body\">\n      <div class=\"radio-group\">\n        <label><input type=\"radio\" name=\"pick\" value=\"red\"> Red</label>\n        <label><input type=\"radio\" name=\"pick\" value=\"green\" checked> Green (default)</label>\n        <label><input type=\"radio\" name=\"pick\" value=\"blue\"> Blue</label>\n        <label><input type=\"radio\" name=\"pick\" value=\"purple\"> Purple</label>\n      </div>\n      <span class=\"friction\">friction: low</span>\n    </div>\n  </div>\n\n  <!-- 14. SLIDER -->\n  <div class=\"box\">\n    <div class=\"box-label\">Slider</div>\n    <div class=\"box-body\">\n      <div id=\"range-value\">50</div>\n      <input type=\"range\" id=\"range-slider\" min=\"0\" max=\"100\" value=\"50\">\n      <p id=\"range-label\">Drag the thumb left or right</p>\n      <span class=\"friction\">friction: low</span>\n    </div>\n  </div>\n\n  <!-- 15. BLINK -->\n  <div class=\"box\">\n    <div class=\"box-label\">Blink</div>\n    <div class=\"box-body\">\n      <span id=\"blink-text\">BLINK</span>\n      <p>The &lt;blink&gt; tag was removed from browsers,<br>reproduced here with CSS animation.</p>\n      <span class=\"friction\">friction: none</span>\n    </div>\n  </div>\n\n  <!-- 16. MARQUEE -->\n  <div class=\"box\">\n    <div class=\"box-label\">Marquee</div>\n    <div class=\"box-body\">\n      <div class=\"marquee-wrap\">\n        <marquee behavior=\"scroll\" direction=\"left\" scrollamount=\"4\">\n          ★ Welcome to the Web! &nbsp;&nbsp;&nbsp;&nbsp; The &lt;marquee&gt; element scrolls text horizontally. &nbsp;&nbsp;&nbsp;&nbsp; A relic of the 1990s web. &nbsp;&nbsp;&nbsp;&nbsp; Still renders in most browsers. &nbsp;&nbsp;&nbsp;&nbsp; ★\n        </marquee>\n      </div>\n      <p>The &lt;marquee&gt; element is deprecated<br>but still supported in most browsers.</p>\n      <span class=\"friction\">friction: none</span>\n    </div>\n  </div>\n\n  <!-- 17. CUSTOM CURSOR -->\n  <div class=\"box\">\n    <div class=\"box-label\">Custom Cursor</div>\n    <div class=\"box-body\">\n      <div id=\"cursor-zone\">Move your cursor in here</div>\n      <span class=\"friction\">friction: none</span>\n    </div>\n  </div>\n\n  <!-- 19. TRAVERSABLE SPACE -->\n  <div class=\"box\" id=\"world-box\">\n    <div class=\"box-label\">Traversable Space</div>\n    <div class=\"box-body\" id=\"world-body\">\n      <div id=\"world-canvas\"></div>\n    </div>\n    <div id=\"world-coords\">0, 0</div>\n  </div>\n\n  <!-- 18. ALERT -->\n  <div class=\"box\">\n    <div class=\"box-label\">Alert</div>\n    <div class=\"box-body\">\n      <button id=\"alert-btn\">Show alert()</button>\n      <p>Triggers a blocking browser dialog</p>\n      <span class=\"friction\">friction: high</span>\n    </div>\n  </div>\n\n  <!-- 20. COUNTDOWN TIMER -->\n  <div class=\"box\">\n    <div class=\"box-label\">Countdown Timer</div>\n    <div class=\"box-body\">\n      <div id=\"countdown-display\">1:00</div>\n      <div class=\"timer-controls\">\n        <button id=\"countdown-start\">Start</button>\n        <button id=\"countdown-reset\">Reset</button>\n      </div>\n      <span class=\"friction\">friction: low</span>\n    </div>\n  </div>\n\n  <!-- 21. COUNT UP TIMER -->\n  <div class=\"box\">\n    <div class=\"box-label\">Count Up Timer</div>\n    <div class=\"box-body\">\n      <div id=\"countup-display\">0:00</div>\n      <div class=\"timer-controls\">\n        <button id=\"countup-start\">Start</button>\n        <button id=\"countup-stop\">Stop</button>\n      </div>\n      <span class=\"friction\">friction: low</span>\n    </div>\n  </div>\n\n</div>\n\n<script>\n<\/script>\n</body>\n</html>\n",
+  css: "* { box-sizing: border-box; margin: 0; padding: 0; }\n\n/* The outer grid: 3 equal columns, each row is half the screen tall.\n   gap: 1px + background: black creates the black lines between cells —\n   the gaps are actually just the black background showing through. */\n.grid {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  grid-auto-rows: 50vh;\n  gap: 1px;\n  background: black;\n}\n\n/* Each .box is a flex column: .box-label on top, .box-body fills the rest */\n.box {\n  background: white;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n}\n\n/* flex-shrink: 0 prevents the label from getting squished if space is tight */\n.box-label {\n  border-bottom: 1px solid black;\n  padding: 4px 8px;\n  flex-shrink: 0;\n}\n\n/* flex: 1 makes .box-body grow to fill whatever space the label didn't take */\n.box-body {\n  flex: 1;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  padding: 20px;\n  gap: 10px;\n  overflow: hidden;\n  position: relative; /* needed so .friction can be positioned inside it */\n}\n\n/* .friction labels are pinned to the bottom-right corner of each box */\n.friction {\n  position: absolute;\n  bottom: 6px;\n  right: 8px;\n  font-size: 0.7rem;\n}\n\n/* ── DRAG ── */\n#drag-item {\n  border: 1px solid black;\n  padding: 20px 28px;\n  cursor: grab;\n  user-select: none;\n  text-align: center;\n}\n#drag-item.dragging { opacity: 0.4; cursor: grabbing; }\n\n/* ── DROP ── */\n#drop-zone {\n  width: 180px;\n  height: 110px;\n  border: 2px dashed black;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  text-align: center;\n}\n\n/* ── HOVER ── */\n#hover-card {\n  border: 1px solid black;\n  padding: 20px 30px;\n  cursor: default;\n  text-align: center;\n}\n#hover-card:hover { background: black; color: white; }\n\n/* ── SCROLL WHEEL ── */\n#scroll-inner {\n  width: 100%;\n  max-height: 170px;\n  overflow-y: scroll;\n  border: 1px solid black;\n  padding: 10px;\n  line-height: 1.6;\n}\n#scroll-inner p + p { margin-top: 8px; }\n\n/* ── HOLD PROGRESS ── */\n#hold-track {\n  width: 200px;\n  height: 14px;\n  border: 1px solid black;\n}\n#hold-bar {\n  height: 100%;\n  width: 0%;\n  background: black;\n}\n\n/* ── LINK LIST ── */\n.link-list {\n  display: flex;\n  flex-direction: column;\n  gap: 12px;\n  align-items: flex-start;\n}\n\n/* ── CHECKBOX / RADIO ── */\n.check-group, .radio-group {\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n  align-items: flex-start;\n}\n.check-group label, .radio-group label {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  cursor: pointer;\n}\n\n/* ── SLIDER ── */\n#range-slider { width: 200px; }\n#range-value { font-size: 2rem; }\n\n/* ── BLINK ── */\n@keyframes blink-anim {\n  0%, 49% { opacity: 1; }\n  50%, 100% { opacity: 0; }\n}\n#blink-text {\n  font-size: 1.5rem;\n  animation: blink-anim 1s step-start infinite;\n}\n\n/* ── MARQUEE ── */\n.marquee-wrap { width: 100%; }\n\n/* ── TIMERS ── */\n#countdown-display, #countup-display {\n  font-size: 3rem;\n  font-variant-numeric: tabular-nums;\n  letter-spacing: 0.05em;\n}\n.timer-controls { display: flex; gap: 8px; }\n#countdown-display.done { color: red; }\n\n/* ── TRAVERSABLE SPACE ── */\n#world-box { position: relative; }\n#world-body {\n  overflow: scroll;\n  padding: 0;\n  align-items: flex-start;\n  justify-content: flex-start;\n  cursor: crosshair;\n}\n#world-canvas {\n  width: 5000px;\n  height: 3000px;\n  flex-shrink: 0;\n  position: relative;\n  background-image: radial-gradient(circle, #ccc 1px, transparent 1px);\n  background-size: 40px 40px;\n}\n#world-coords {\n  position: absolute;\n  bottom: 6px;\n  right: 8px;\n  font-size: 0.7rem;\n  pointer-events: none;\n  background: rgba(255,255,255,0.85);\n  padding: 1px 5px;\n}\n\n/* ── CUSTOM CURSOR ── */\n#cursor-zone {\n  width: 80%;\n  height: 60%;\n  border: 1px solid black;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  text-align: center;\n  cursor: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='black' stroke-width='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='30' stroke='black' stroke-width='2'/%3E%3Cline x1='2' y1='16' x2='30' y2='16' stroke='black' stroke-width='2'/%3E%3C/svg%3E\") 16 16, crosshair;\n}",
+  js: "// ─────────────────────────────────────────────────────────────────\n// HOW JAVASCRIPT INTERACTIVITY WORKS ON THIS PAGE\n//\n// Each interaction follows the same basic pattern:\n//   1. Get a reference to an HTML element using getElementById()\n//   2. Listen for an event (click, mousedown, input, etc.)\n//      using addEventListener()\n//   3. Run a function when that event happens\n//\n// addEventListener('eventName', function) means:\n//   \"When [eventName] happens on this element, run this function.\"\n// ─────────────────────────────────────────────────────────────────\n\n// ── CLICK ──\n// getElementById finds the element with that id= in the HTML\nconst clickBtn   = document.getElementById('click-btn');\nconst clickCount = document.getElementById('click-count');\nlet clicks = 0;\nclickBtn.addEventListener('click', () => {\n  clicks++;\n  // The ternary (? :) chooses between 'click' and 'clicks' based on the count\n  clickCount.textContent = clicks + (clicks === 1 ? ' click' : ' clicks');\n});\n\n// ── DOUBLE-CLICK ──\n// 'dblclick' is a separate event from 'click' — the browser fires it\n// only when two clicks happen quickly in a row on the same element\nconst dblTarget = document.getElementById('dbl-target');\nconst dblHint   = document.getElementById('dbl-hint');\nlet dblOn = false; // tracks whether the element is toggled on or off\ndblTarget.addEventListener('dblclick', () => {\n  dblOn = !dblOn;\n  dblTarget.classList.toggle('toggled', dblOn);\n  dblTarget.textContent = dblOn ? 'Toggled on!\\n(double-click again)' : 'Double-click\\nto toggle';\n  dblHint.textContent = dblOn ? 'State: ON' : 'State: OFF';\n});\n\n// ── CLICK AND HOLD ──\n// requestAnimationFrame (RAF) runs a function on every animation frame (~60/sec).\n// This is how we animate the bar growing smoothly while the button is held.\nconst holdBtn  = document.getElementById('hold-btn');\nconst holdBar  = document.getElementById('hold-bar');\nconst holdHint = document.getElementById('hold-hint');\nlet holdRaf = null;  // stores the RAF id so we can cancel it\nlet holdVal = 0;     // current fill percentage (0–100)\nlet holding = false; // true while the mouse/touch is held down\n\nfunction holdTick() {\n  if (!holding) return;\n  holdVal = Math.min(100, holdVal + 1.8); // Math.min prevents going over 100\n  holdBar.style.width = holdVal + '%';\n  if (holdVal >= 100) {\n    holdHint.textContent = 'Full! Release to reset.';\n    return; // stop animating once full\n  }\n  holdRaf = requestAnimationFrame(holdTick); // schedule the next frame\n}\n\nfunction startHold() {\n  holding = true;\n  holdHint.textContent = 'Holding…';\n  holdRaf = requestAnimationFrame(holdTick);\n}\n\nfunction endHold() {\n  holding = false;\n  cancelAnimationFrame(holdRaf);\n  holdVal = 0;\n  holdBar.style.width = '0%';\n  holdHint.textContent = 'Hold to fill the bar';\n}\n\nholdBtn.addEventListener('mousedown', startHold);\nholdBtn.addEventListener('mouseup', endHold);\nholdBtn.addEventListener('mouseleave', endHold);\nholdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });\nholdBtn.addEventListener('touchend', endHold);\n\n// ── DRAG ──\n// The HTML5 drag API uses a series of events: dragstart → dragover → drop → dragend.\n// dataTransfer carries data from the dragged element to the drop target.\nconst dragItem = document.getElementById('drag-item');\ndragItem.addEventListener('dragstart', (e) => {\n  e.dataTransfer.setData('text/plain', 'block'); // what we're dragging\n  e.dataTransfer.effectAllowed = 'move';\n  // requestAnimationFrame delays the class change by one frame so the\n  // browser captures the un-dimmed element as the drag image\n  requestAnimationFrame(() => dragItem.classList.add('dragging'));\n});\ndragItem.addEventListener('dragend', () => {\n  dragItem.classList.remove('dragging');\n});\n\n// ── DROP ──\nconst dropZone = document.getElementById('drop-zone');\ndropZone.addEventListener('dragover', (e) => {\n  e.preventDefault(); // REQUIRED — without this, dropping is not allowed\n  e.dataTransfer.dropEffect = 'move';\n  dropZone.classList.add('over');\n});\ndropZone.addEventListener('dragleave', () => {\n  dropZone.classList.remove('over');\n});\ndropZone.addEventListener('drop', (e) => {\n  e.preventDefault();\n  dropZone.classList.remove('over');\n  dropZone.classList.add('success');\n  dropZone.textContent = '✓ Dropped!';\n  setTimeout(() => {\n    dropZone.classList.remove('success');\n    dropZone.textContent = 'Drop something\\nhere';\n  }, 2000);\n});\n\n// ── CLICK + DRAG TO SELECT ──\n// 'selectionchange' fires on the document whenever the text selection changes.\n// window.getSelection().toString() returns the currently highlighted text.\nconst selectableText = document.getElementById('selectable-text');\nconst selectionCount = document.getElementById('selection-count');\ndocument.addEventListener('selectionchange', () => {\n  const sel  = window.getSelection();\n  const text = sel ? sel.toString() : '';\n  if (text.length > 0) {\n    selectionCount.textContent = text.length + ' character' + (text.length === 1 ? '' : 's') + ' selected';\n  } else {\n    selectionCount.textContent = 'Nothing selected';\n  }\n});\n\n\n// ── SELECT (DROPDOWN) ──\nconst dropdown = document.getElementById('dropdown');\nconst dropdownOut = document.getElementById('dropdown-out');\ndropdown.addEventListener('change', () => {\n  dropdownOut.textContent = dropdown.value ? 'Selected: ' + dropdown.value : 'No selection yet';\n});\n\n// ── TEXT INPUT ──\nconst textField = document.getElementById('text-field');\nconst charCount = document.getElementById('char-count');\ntextField.addEventListener('input', () => {\n  charCount.textContent = textField.value.length + ' / 80 characters';\n});\n\n// ── SLIDER ──\nconst rangeSlider = document.getElementById('range-slider');\nconst rangeValue = document.getElementById('range-value');\nrangeSlider.addEventListener('input', () => {\n  rangeValue.textContent = rangeSlider.value;\n});\n\n// ── WORLD TEXT DISCOVERIES ──\n// An immediately-invoked function (function() { ... })() runs once right away.\n// It's used here just to keep the 'items' variable from leaking into global scope.\n(function() {\n  const canvas = document.getElementById('world-canvas');\n  const items = [\n    [2460, 1460, 'you started somewhere around here'],\n    [2490,   55, 'the top of the world'],\n    [2420, 2930, 'the bottom of the world'],\n    [  55, 1485, 'western edge'],\n    [4840, 1485, 'eastern edge'],\n    [  70,   70, 'northwest corner'],\n    [4760,   70, 'northeast corner'],\n    [  70, 2930, 'southwest corner'],\n    [4760, 2930, 'southeast corner'],\n    [1200,  580, 'hello from up here'],\n    [3750,  380, 'pretty far out'],\n    [ 820, 2180, 'deep southwest'],\n    [4080, 2380, 'deep southeast'],\n    [ 600, 1100, 'west side'],\n    [4380,  820, 'east side'],\n    [1520, 2720, 'heading south'],\n    [3580, 2640, 'almost the bottom-right'],\n    [1480,  340, 'northwest quadrant'],\n    [3820, 1080, 'middle east'],\n    [ 960, 1820, 'wandering west'],\n    [2920,  470, 'northern territory'],\n    [2020, 2380, 'southern hemisphere'],\n    [ 320,  480, 'here be nothing'],\n    [4580, 1780, 'still going east?'],\n    [1820, 1220, 'slightly off-center'],\n    [3120, 1880, 'a little east of center'],\n    [ 440, 2600, 'you really went there'],\n    [4680,  440, 'few come this far'],\n    [2500, 1700, 'keep exploring'],\n    [1100, 1400, 'somewhere in the middle-left'],\n    [3400,  900, 'upper right region'],\n    [2200, 2800, 'near the southern floor'],\n    [4200,  200, 'way up northeast'],\n    [ 200, 1000, 'upper west side'],\n    [3000, 2600, 'almost the bottom'],\n  ];\n  items.forEach(([x, y, text]) => {\n    const el = document.createElement('span');\n    el.textContent = text;\n    el.style.cssText = `position:absolute;left:${x}px;top:${y}px;font-size:0.75rem;color:#aaa;white-space:nowrap;`;\n    canvas.appendChild(el);\n  });\n})();\n\n// ── TRAVERSABLE SPACE ──\n// The canvas is 5000×3000px — much larger than the screen.\n// We start scrolled to the center so there's room to explore in all directions.\n// scrollLeft/scrollTop track how far from the top-left the view has shifted.\nconst worldBody   = document.getElementById('world-body');\nconst worldCoords = document.getElementById('world-coords');\nworldBody.scrollLeft = (5000 - worldBody.clientWidth)  / 2; // start centered\nworldBody.scrollTop  = (3000 - worldBody.clientHeight) / 2;\nconst worldOriginX = worldBody.scrollLeft; // remember the starting position\nconst worldOriginY = worldBody.scrollTop;\nworldBody.addEventListener('scroll', () => {\n  // Show coordinates relative to where we started (so center = 0, 0)\n  const x = Math.round(worldBody.scrollLeft - worldOriginX);\n  const y = Math.round(worldBody.scrollTop  - worldOriginY);\n  worldCoords.textContent = x + ', ' + y;\n});\n\n// ── COUNTDOWN TIMER ──\n// setInterval(fn, 1000) calls fn every 1000 milliseconds (1 second).\n// We save the interval ID in countdownInterval so we can stop it with clearInterval().\nconst countdownDisplay = document.getElementById('countdown-display');\nconst countdownStart   = document.getElementById('countdown-start');\nconst countdownReset   = document.getElementById('countdown-reset');\nconst COUNTDOWN_FROM   = 60; // starting value in seconds — change this to adjust the timer\nlet countdownVal      = COUNTDOWN_FROM;\nlet countdownInterval = null; // null means the timer is not currently running\n\n// Converts a number of seconds into a \"m:ss\" string (e.g. 75 → \"1:15\")\nfunction formatTime(s) {\n  const m   = Math.floor(s / 60);\n  const sec = s % 60;\n  return m + ':' + String(sec).padStart(2, '0'); // padStart ensures two digits: \"1:05\" not \"1:5\"\n}\n\nfunction countdownTick() {\n  countdownVal--;\n  countdownDisplay.textContent = formatTime(countdownVal);\n  if (countdownVal <= 0) {\n    clearInterval(countdownInterval);\n    countdownInterval = null;\n    countdownStart.textContent = 'Start';\n    countdownDisplay.classList.add('done');\n  }\n}\n\ncountdownStart.addEventListener('click', () => {\n  if (countdownInterval) {\n    clearInterval(countdownInterval);\n    countdownInterval = null;\n    countdownStart.textContent = 'Start';\n  } else if (countdownVal > 0) {\n    countdownInterval = setInterval(countdownTick, 1000);\n    countdownStart.textContent = 'Pause';\n  }\n});\n\ncountdownReset.addEventListener('click', () => {\n  clearInterval(countdownInterval);\n  countdownInterval = null;\n  countdownVal = COUNTDOWN_FROM;\n  countdownDisplay.textContent = formatTime(countdownVal);\n  countdownDisplay.classList.remove('done');\n  countdownStart.textContent = 'Start';\n});\n\n// ── COUNT UP TIMER ──\nconst countupDisplay = document.getElementById('countup-display');\nconst countupStart = document.getElementById('countup-start');\nconst countupStop = document.getElementById('countup-stop');\nlet countupVal = 0;\nlet countupInterval = null;\n\ncountupStart.addEventListener('click', () => {\n  if (countupInterval) {\n    clearInterval(countupInterval);\n    countupInterval = null;\n    countupStart.textContent = 'Resume';\n  } else {\n    countupInterval = setInterval(() => {\n      countupVal++;\n      countupDisplay.textContent = formatTime(countupVal);\n    }, 1000);\n    countupStart.textContent = 'Pause';\n  }\n});\n\ncountupStop.addEventListener('click', () => {\n  clearInterval(countupInterval);\n  countupInterval = null;\n  countupVal = 0;\n  countupDisplay.textContent = '0:00';\n  countupStart.textContent = 'Start';\n});\n\n// ── ALERT ──\ndocument.getElementById('alert-btn').addEventListener('click', () => {\n  alert('Hello from alert()!');\n});",
+};
+
+const files = [
+  { key: 'html', name: 'index.html', mode: 'htmlmixed' },
+  { key: 'css', name: 'style.css', mode: 'css' },
+  { key: 'js', name: 'script.js', mode: 'javascript' },
+];
+
+const storageKey = 'playground:interactions';
+
+const tabsEl = document.getElementById('tabs');
+const tabEls = {};
+for (const f of files) {
+  const tab = document.createElement('div');
+  tab.className = 'tab';
+  tab.textContent = f.name;
+  tab.addEventListener('click', () => switchFile(f.key));
+  tabsEl.appendChild(tab);
+  tabEls[f.key] = tab;
+}
+
+const activeFileNameEl = document.getElementById('activeFileName');
+const statusEl = document.getElementById('status');
+const preview = document.getElementById('preview');
+
+const cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
+  lineNumbers: true,
+  lineWrapping: true,
+  tabSize: 2,
+});
+
+const saved = localStorage.getItem(storageKey);
+let parts = saved ? JSON.parse(saved) : { ...ORIGINAL };
+let activeKey = null;
+statusEl.textContent = saved ? 'edited, autosaved locally' : 'original';
+
+function assembleSource() {
+  let source = parts.html;
+  source = source.replace(/<style>[\s\S]*?<\/style>/, `<style>
+${parts.css}
+<\/style>`);
+  source = source.replace(/<script>[\s\S]*?<\/script>/, `<script>
+${parts.js}
+<\/script>`);
+  return source;
+}
+
+function runPreview() {
+  preview.srcdoc = assembleSource();
+}
+
+function switchFile(key) {
+  if (activeKey) parts[activeKey] = cm.getValue();
+  activeKey = key;
+  const f = files.find((f) => f.key === key);
+  cm.setOption('mode', f.mode);
+  cm.setValue(parts[key]);
+  activeFileNameEl.textContent = f.name;
+  for (const k in tabEls) tabEls[k].classList.toggle('active', k === key);
+}
+
+let debounceTimer;
+cm.on('change', (instance, changeObj) => {
+  if (changeObj.origin === 'setValue') return;
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    parts[activeKey] = cm.getValue();
+    runPreview();
+    localStorage.setItem(storageKey, JSON.stringify(parts));
+    statusEl.textContent = 'edited, autosaved locally';
+  }, 400);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  localStorage.removeItem(storageKey);
+  parts = { ...ORIGINAL };
+  activeKey = null;
+  statusEl.textContent = 'original';
+  switchFile('html');
+  runPreview();
+});
+
+switchFile('html');
+runPreview();
+</script>
+</body>
+</html>

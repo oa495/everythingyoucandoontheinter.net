@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Website References by Concept — Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.topbar h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.topbar .controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar a {
+  font-size: 0.9rem;
+  color: #555;
+  text-decoration: none;
+}
+
+.topbar a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 7px 14px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}
+
+button:hover { background: #f5f5f5; }
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  padding: 0 20px;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: #666;
+}
+
+.tab.active {
+  color: #000;
+  font-weight: 600;
+  border-bottom-color: #000;
+}
+
+.filebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  color: #666;
+  border-bottom: 1px solid #eee;
+}
+
+.panes {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  min-height: 0;
+}
+
+@media (max-width: 800px) {
+  .panes { grid-template-columns: 1fr; }
+}
+
+.editor-pane, .preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-pane { border-right: 1px solid #ddd; }
+
+.preview-pane .filebar { border-right: none; }
+
+.CodeMirror {
+  flex: 1;
+  height: auto;
+  font-size: 0.9rem;
+}
+
+iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: white;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Website References by Concept</h1>
+  <div class="controls">
+    <a href="../concepts.html">&larr; Back to page</a>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="panes">
+  <div class="editor-pane">
+    <div class="filebar">
+      <span id="activeFileName"></span>
+      <span id="status"></span>
+    </div>
+    <textarea id="editor"></textarea>
+  </div>
+  <div class="preview-pane">
+    <div class="filebar"><span>Preview</span></div>
+    <iframe id="preview" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script>
+// The three "files" are baked in at generation time (see
+// generate-playgrounds.mjs) so this page never needs to fetch anything —
+// it works over file://, a static host, or GitHub Pages equally well.
+const ORIGINAL = {
+  html: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>Concepts</title>\n<style>\n</style>\n</head>\n<body>\n\n<h1>Website References</h1>\n\n<!-- Each .concept block contains:\n       <h2>  — the concept name\n       <ul>  — a list of links to sites that use that concept\n\n     To add a new site, copy one <li> line and change the href and link text.\n     target=\"_blank\" makes the link open in a new tab. -->\n\n<div class=\"concept\">\n  <h2>Remembering / Persistence</h2>\n  <ul>\n    <li><a href=\"https://kpojo.world/story\" target=\"_blank\">Story</a></li>\n    <li><a href=\"https://www.blairs.computer/\" target=\"_blank\">Blair's Computer</a></li>\n  </ul>\n</div>\n\n<div class=\"concept\">\n  <h2>Infinity / Scale</h2>\n  <ul>\n    <li><a href=\"https://aliciaguo.com/to-be/\" target=\"_blank\">To Be</a></li>\n    <li><a href=\"https://crawlspace.cool/pleasure-of-the-text\" target=\"_blank\">Pleasure of the Text</a></li>\n  </ul>\n</div>\n\n<div class=\"concept\">\n  <h2>Togetherness / Telepresence</h2>\n  <ul>\n    <li><a href=\"https://www.yourworldoftext.com/\" target=\"_blank\">Your World of Text</a></li>\n    <li><a href=\"https://give-and-take.download/\" target=\"_blank\">Give and Take</a></li>\n  </ul>\n</div>\n\n<div class=\"concept\">\n  <h2>Timed Concealment / Sequencing</h2>\n  <ul>\n    <!-- The <span class=\"note\"> adds a small gray note after the link -->\n    <li><a href=\"https://a-small-memorial.bytoddwords.com/\" target=\"_blank\">A Small Memorial</a> <span class=\"note\">(forcing you into a physical gesture)</span></li>\n    <li><a href=\"https://tinysubversions.com/stuff/lastwords/\" target=\"_blank\">Last Words</a></li>\n    <li><a href=\"https://crawlspace.cool/at-the-end-of-the-earth-i-find\" target=\"_blank\">At the End of the Earth I Find</a></li>\n    <li><a href=\"https://crawlspace.cool/return-home\" target=\"_blank\">Return Home</a></li>\n    <li><a href=\"https://afterimages.nicciyin.com/\" target=\"_blank\">Afterimages</a></li>\n  </ul>\n</div>\n\n<div class=\"concept\">\n  <h2>Evocative</h2>\n  <!-- h3 breaks this concept into two sub-categories -->\n  <h3>Tailored to evoke or represent a certain emotion</h3>\n  <ul>\n    <li><a href=\"https://ifeelsomuchsha.me/\" target=\"_blank\">I Feel So Much Shame</a></li>\n    <li><a href=\"https://crawlspace.cool/grief-found-me\" target=\"_blank\">Grief Found Me</a></li>\n    <li><a href=\"https://aliciaguo.com/goodbye-boston/\" target=\"_blank\">Goodbye Boston</a></li>\n    <li><a href=\"https://aliciaguo.com/love-me-or-not/\" target=\"_blank\">Love Me or Not</a></li>\n    <li><a href=\"https://adarkroom.doublespeakgames.com/\" target=\"_blank\">A Dark Room</a></li>\n    <li><a href=\"https://crawlspace.cool/i-am-under-the-impression\" target=\"_blank\">I Am Under the Impression</a></li>\n  </ul>\n  <h3>Tailored to evoke or represent a real life experience</h3>\n  <ul>\n    <li><a href=\"https://pablo.energy/sunday-sites/practice/\" target=\"_blank\">Practice</a></li>\n    <li><a href=\"https://papertoilet.com/\" target=\"_blank\">Paper Toilet</a></li>\n    <li><a href=\"https://crawlspace.cool/i-am-under-the-impression\" target=\"_blank\">I Am Under the Impression</a></li>\n    <li><a href=\"https://shelby.cool/a-room-with-a-window/\" target=\"_blank\">A Room with a Window</a></li>\n    <li><a href=\"https://sas.rochester.edu/aah/sites/onlythesky/\" target=\"_blank\">Only the Sky</a></li>\n    <li><a href=\"https://coyote.computer/milkfish/\" target=\"_blank\">Milkfish</a></li>\n    <li><a href=\"https://thehtml.review/05/from-mine-to-yours/\" target=\"_blank\">From Mine to Yours</a></li>\n  </ul>\n</div>\n\n<div class=\"concept\">\n  <h2>Show / Hide</h2>\n  <h3>Something \"beneath\" or \"on top\" or branching</h3>\n  <ul>\n    <li><a href=\"https://consumed.today/\" target=\"_blank\">Consumed</a></li>\n    <li><a href=\"https://crawlspace.cool/gazing-in\" target=\"_blank\">Gazing In</a></li>\n    <li><a href=\"https://crawlspace.cool/i-am-under-the-impression\" target=\"_blank\">I Am Under the Impression</a></li>\n    <li><a href=\"https://crawlspace.cool/if-i-were-able\" target=\"_blank\">If I Were Able</a></li>\n    <li><a href=\"https://crawlspace.cool/ode-to-echo\" target=\"_blank\">Ode to Echo</a></li>\n    <li><a href=\"https://coyote.computer/milkfish/\" target=\"_blank\">Milkfish</a></li>\n    <li><a href=\"https://blairjohnsonpoetry.com/spoilia/epigraph.html\" target=\"_blank\">Spoilia / Epigraph</a></li>\n  </ul>\n</div>\n\n<div class=\"concept\">\n  <h2>Shape</h2>\n  <ul>\n    <li><a href=\"https://crawlspace.cool/i-feel-like-if-i-condensed-my-eating-schedules-together-i-d-be-eating-all-day\" target=\"_blank\">I Feel Like If I Condensed My Eating Schedules Together I'd Be Eating All Day</a></li>\n    <li><a href=\"https://thehtml.review/05/meanders/\" target=\"_blank\">Meanders</a></li>\n  </ul>\n</div>\n\n</body>\n</html>\n",
+  css: "* { box-sizing: border-box; margin: 0; padding: 0; }\n\nbody { padding: 40px; font-family: \"Garamond\", serif; }\n\n/* font-size: 4rem makes the h1 very large — 4x the base font size */\nh1 { font-size: 4rem; margin-bottom: 32px; font-weight: normal; }\n\n/* Each .concept is one section (one concept + its list of sites) */\n.concept { margin-bottom: 32px; }\n\n.concept h2 {\n  font-size: 1rem;\n  font-weight: bold;\n  border-bottom: 1px solid black; /* the underline beneath each concept name */\n  padding-bottom: 4px;\n  margin-bottom: 10px;\n}\n\n/* h3 is used for sub-categories within a concept */\n.concept h3 {\n  font-size: 0.9rem;\n  font-weight: normal;\n  font-style: italic;\n  margin-bottom: 6px;\n  margin-top: 14px;\n}\n\n/* list-style: none removes the bullet points */\n.concept ul {\n  list-style: none;\n  padding-left: 0;\n}\n\n.concept ul li {\n  font-size: 0.85rem;\n  margin-bottom: 4px;\n}\n\n/* .note is used for parenthetical descriptions after a link */\n.note {\n  font-size: 0.8rem;\n  color: #555;\n  margin-left: 6px;\n}",
+  js: "",
+};
+
+const files = [
+  { key: 'html', name: 'index.html', mode: 'htmlmixed' },
+  { key: 'css', name: 'style.css', mode: 'css' },
+  { key: 'js', name: 'script.js', mode: 'javascript' },
+];
+
+const storageKey = 'playground:concepts';
+
+const tabsEl = document.getElementById('tabs');
+const tabEls = {};
+for (const f of files) {
+  const tab = document.createElement('div');
+  tab.className = 'tab';
+  tab.textContent = f.name;
+  tab.addEventListener('click', () => switchFile(f.key));
+  tabsEl.appendChild(tab);
+  tabEls[f.key] = tab;
+}
+
+const activeFileNameEl = document.getElementById('activeFileName');
+const statusEl = document.getElementById('status');
+const preview = document.getElementById('preview');
+
+const cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
+  lineNumbers: true,
+  lineWrapping: true,
+  tabSize: 2,
+});
+
+const saved = localStorage.getItem(storageKey);
+let parts = saved ? JSON.parse(saved) : { ...ORIGINAL };
+let activeKey = null;
+statusEl.textContent = saved ? 'edited, autosaved locally' : 'original';
+
+function assembleSource() {
+  let source = parts.html;
+  source = source.replace(/<style>[\s\S]*?<\/style>/, `<style>
+${parts.css}
+<\/style>`);
+  source = source.replace(/<script>[\s\S]*?<\/script>/, `<script>
+${parts.js}
+<\/script>`);
+  return source;
+}
+
+function runPreview() {
+  preview.srcdoc = assembleSource();
+}
+
+function switchFile(key) {
+  if (activeKey) parts[activeKey] = cm.getValue();
+  activeKey = key;
+  const f = files.find((f) => f.key === key);
+  cm.setOption('mode', f.mode);
+  cm.setValue(parts[key]);
+  activeFileNameEl.textContent = f.name;
+  for (const k in tabEls) tabEls[k].classList.toggle('active', k === key);
+}
+
+let debounceTimer;
+cm.on('change', (instance, changeObj) => {
+  if (changeObj.origin === 'setValue') return;
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    parts[activeKey] = cm.getValue();
+    runPreview();
+    localStorage.setItem(storageKey, JSON.stringify(parts));
+    statusEl.textContent = 'edited, autosaved locally';
+  }, 400);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  localStorage.removeItem(storageKey);
+  parts = { ...ORIGINAL };
+  activeKey = null;
+  statusEl.textContent = 'original';
+  switchFile('html');
+  runPreview();
+});
+
+switchFile('html');
+runPreview();
+</script>
+</body>
+</html>
